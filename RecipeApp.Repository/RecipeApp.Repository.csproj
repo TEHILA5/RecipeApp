@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RecipeApp.Common\RecipeApp.Common.csproj" />
-    <ProjectReference Include="..\RecipeApp.DataContext\RecipeApp.DataContext.csproj" />
   </ItemGroup>
 
 </Project>

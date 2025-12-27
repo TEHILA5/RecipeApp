@@ -84,12 +84,12 @@ namespace RecipeApp.DataContext
             modelBuilder.Entity<Book>()
                 .HasIndex(b => b.UserId);
         }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlServer("Server=T-PC\\SQLEXPRESS;Database=ProjectDB;Trusted_Connection=True;TrustServerCertificate=True;");
-            }
-        }
+        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //{
+        //    if (!optionsBuilder.IsConfigured)
+        //    {
+        //        optionsBuilder.UseSqlServer("Server=T-PC\\SQLEXPRESS;Database=ProjectDB;Trusted_Connection=True;TrustServerCertificate=True;");
+        //    }
+        //}
     }
 }
