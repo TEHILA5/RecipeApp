@@ -28,9 +28,8 @@ namespace RecipeApp.Repository.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation Properties
-        public ICollection<Comment> Comments { get; set; }
-        public ICollection<Book> SavedRecipes { get; set; }
-        public ICollection<History> SearchHistory { get; set; }
+        // Navigation Properties 
+        public ICollection<UserAction> UserActions { get; set; }
+
     }
 }

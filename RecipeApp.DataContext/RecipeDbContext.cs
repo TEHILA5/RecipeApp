@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using RecipeApp.Repository.Entities;
+using RecipeApp.Common.DTOs;
 using Conversion = RecipeApp.Repository.Entities.Conversion;
 
 namespace RecipeApp.DataContext
@@ -21,9 +22,7 @@ namespace RecipeApp.DataContext
         public DbSet<Ingredient> Ingredients { get; set; }
         public DbSet<RecipeIngredient> RecipeIngredients { get; set; }
         public DbSet<Conversion> Conversions { get; set; }
-        public DbSet<History> Histories { get; set; }
-        public DbSet<Comment> Comments { get; set; }
-        public DbSet<Book> Books { get; set; }
+        public DbSet<UserAction> UserActions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -66,23 +65,38 @@ namespace RecipeApp.DataContext
                 .HasIndex(i => i.Name)
                 .IsUnique();
 
-            // Book - Unique constraint
-            modelBuilder.Entity<Book>()
-                .HasIndex(b => new { b.UserId, b.RecipeId })
-                .IsUnique();
+            // UserAction - Indexes
+            modelBuilder.Entity<UserAction>()
+                .HasIndex(ua => ua.UserId);
 
-            // Additional Indexes for performance
+            modelBuilder.Entity<UserAction>()
+                .HasIndex(ua => ua.ActionType);
+
+            modelBuilder.Entity<UserAction>()
+                .HasIndex(ua => new { ua.UserId, ua.ActionType });
+
+            modelBuilder.Entity<UserAction>()
+                .HasIndex(ua => ua.RecipeId);
+
+            modelBuilder.Entity<UserAction>()
+                .HasOne(ua => ua.User)
+                .WithMany(u => u.UserActions)
+                .HasForeignKey(ua => ua.UserId);
+
+            modelBuilder.Entity<UserAction>()
+                .HasOne(ua => ua.Recipe)
+                .WithMany(r => r.UserActions)
+                .HasForeignKey(ua => ua.RecipeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserAction>()
+                .HasIndex(ua => new { ua.UserId, ua.RecipeId })
+                .IsUnique()
+                .HasFilter($"[{nameof(UserAction.ActionType)}] = {(int)UserActionType.Book}");
+
+            // Recipe - Indexes
             modelBuilder.Entity<Recipe>()
                 .HasIndex(r => r.Category);
-
-            modelBuilder.Entity<History>()
-                .HasIndex(h => new { h.UserId, h.Category });
-
-            modelBuilder.Entity<Comment>()
-                .HasIndex(c => c.RecipeId);
-
-            modelBuilder.Entity<Book>()
-                .HasIndex(b => b.UserId);
         }
         //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         //{
