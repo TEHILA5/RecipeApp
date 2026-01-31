@@ -16,7 +16,7 @@ namespace RecipeApp.Repository.Interfaces
         public DbSet<Recipe> Recipes { get; set; }
         public DbSet<RecipeIngredient> RecipeIngredients { get; set; }
         public DbSet<User> Users { get; set; }
-        public void Save();
+        public Task Save();
 
     }
 }

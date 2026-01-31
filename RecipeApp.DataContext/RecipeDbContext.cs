@@ -5,15 +5,17 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
-using RecipeApp.Repository.Entities;
 using RecipeApp.Common.DTOs;
+using RecipeApp.Repository.Entities;
+using RecipeApp.Repository.Interfaces;
 using Conversion = RecipeApp.Repository.Entities.Conversion;
 
 namespace RecipeApp.DataContext
 {
-    public class RecipeDbContext : DbContext
+    public class RecipeDbContext : DbContext, IContext
     {
-        public RecipeDbContext(DbContextOptions<RecipeDbContext> options) : base(options)
+        public RecipeDbContext(DbContextOptions<RecipeDbContext> options)
+        : base(options)
         {
         }
 
@@ -23,6 +25,11 @@ namespace RecipeApp.DataContext
         public DbSet<RecipeIngredient> RecipeIngredients { get; set; }
         public DbSet<Conversion> Conversions { get; set; }
         public DbSet<UserAction> UserActions { get; set; }
+
+        public async Task Save()
+        {
+            await SaveChangesAsync();
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

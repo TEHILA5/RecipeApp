@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
 
@@ -17,33 +18,26 @@ namespace RecipeApp.Repository.Repositories
             ctx = context;
         }
 
-        public Recipe AddItem(Recipe item)
+        public async Task<List<Recipe>> GetAll()
+        {
+            return await ctx.Recipes.ToListAsync();
+        }
+
+        public async Task<Recipe> GetById(int id)
+        {
+            return await ctx.Recipes.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<Recipe> AddItem(Recipe item)
         {
             ctx.Recipes.Add(item);
-            ctx.Save();
+            await ctx.Save();
             return item;
         }
 
-        public void DeleteItem(int id)
+        public async Task<Recipe> UpdateItem(int id, Recipe recipe)
         {
-            var recipe = ctx.Recipes.FirstOrDefault(x => x.Id == id);
-            ctx.Recipes.Remove(recipe);
-            ctx.Save();
-        }
-
-        public List<Recipe> GetAll()
-        {
-            return ctx.Recipes.ToList();
-        }
-
-        public Recipe GetById(int id)
-        {
-            return ctx.Recipes.FirstOrDefault(x => x.Id == id);
-        }
-
-        public Recipe UpdateItem(int id, Recipe recipe)
-        {
-            var r = ctx.Recipes.FirstOrDefault(x => x.Id == id);
+            var r = await ctx.Recipes.FirstOrDefaultAsync(x => x.Id == id);
             r.Name = recipe.Name;
             r.Description = recipe.Description;
             r.Category = recipe.Category;
@@ -53,9 +47,15 @@ namespace RecipeApp.Repository.Repositories
             r.Level = recipe.Level;
             r.PrepTime = recipe.PrepTime;
             r.TotalTime = recipe.TotalTime;
-            r.Id = id;
-            ctx.Save();
+            await ctx.Save();
             return r;
+        }
+
+        public async Task DeleteItem(int id)
+        {
+            var recipe = await ctx.Recipes.FirstOrDefaultAsync(x => x.Id == id);
+            ctx.Recipes.Remove(recipe);
+            await ctx.Save();
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
 
@@ -17,40 +18,39 @@ namespace RecipeApp.Repository.Repositories
             ctx = context;
         }
 
-        public User AddItem(User item)
+        public async Task<List<User>> GetAll()
+        {
+            return await ctx.Users.ToListAsync();
+        }
+
+        public async Task<User> GetById(int id)
+        {
+            return await ctx.Users.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<User> AddItem(User item)
         {
             ctx.Users.Add(item);
-            ctx.Save();
+            await ctx.Save();
             return item;
         }
 
-        public void DeleteItem(int id)
+        public async Task<User> UpdateItem(int id, User user)
         {
-            var user = ctx.Users.FirstOrDefault(x => x.Id == id);
-            ctx.Users.Remove(user);
-            ctx.Save();
-        }
-
-        public List<User> GetAll()
-        {
-            return ctx.Users.ToList();
-        }
-
-        public User GetById(int id)
-        {
-            return ctx.Users.FirstOrDefault(x => x.Id == id);
-        }
-
-        public User UpdateItem(int id, User user)
-        {
-            var u = ctx.Users.FirstOrDefault(x => x.Id == id);
+            var u = await ctx.Users.FirstOrDefaultAsync(x => x.Id == id);
             u.Name = user.Name;
             u.Phone = user.Phone;
             u.Email = user.Email;
             u.PasswordHash = user.PasswordHash;
-            u.Id = id;
-            ctx.Save();
+            await ctx.Save();
             return u;
+        }
+
+        public async Task DeleteItem(int id)
+        {
+            var user = await ctx.Users.FirstOrDefaultAsync(x => x.Id == id);
+            ctx.Users.Remove(user);
+            await ctx.Save();
         }
     }
 }

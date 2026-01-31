@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="10.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11">
       <PrivateAssets>all</PrivateAssets>
@@ -21,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RecipeApp.Common\RecipeApp.Common.csproj" />
+    <ProjectReference Include="..\RecipeApp.DataContext\RecipeApp.DataContext.csproj" />
     <ProjectReference Include="..\RecipeApp.Repository\RecipeApp.Repository.csproj" />
   </ItemGroup>
 

@@ -22,7 +22,7 @@ namespace RecipeApp.Common.DTOs
         public string? RecipeName { get; set; }
         public string? RecipeImageUrl { get; set; }
 
-        public string? Category { get; set; }
+        public RecipeCategory? Category { get; set; }
 
         // Comment
         public string? UserName { get; set; }
@@ -49,7 +49,18 @@ namespace RecipeApp.Common.DTOs
     public class HistoryCreateDto
     {
         public int UserId { get; set; }
-        public string Category { get; set; }
+        public RecipeCategory Category { get; set; }
     }
 
+    public class UserPreferencesDto
+    {
+        public RecipeCategory FavoriteCategory { get; set; }
+        public List<CategoryStatsDto> CategoryStats { get; set; }
+    }
+
+    public class CategoryStatsDto
+    {
+        public RecipeCategory Category { get; set; }
+        public int SearchCount { get; set; }
+    }
 }

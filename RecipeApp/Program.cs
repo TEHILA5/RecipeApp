@@ -1,6 +1,9 @@
-using RecipeApp.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using RecipeApp.DataContext;
+using RecipeApp.Repository.Interfaces;
+using RecipeApp.Repository.Repositories;
+using RecipeApp.Services.Mapping;
 
 namespace RecipeApp
 {
@@ -9,9 +12,13 @@ namespace RecipeApp
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            // DbContext
+            // רישום AutoMapper
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
+            // DbContext עם DI
             builder.Services.AddDbContext<RecipeDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            // IContext דרך ה?DbContext
+            builder.Services.AddScoped<IContext>(provider => provider.GetRequiredService<RecipeDbContext>());
             // Repositories
             builder.Services.AddRepositories();
             // Add services to the container.
@@ -26,6 +33,12 @@ namespace RecipeApp
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+            }
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();

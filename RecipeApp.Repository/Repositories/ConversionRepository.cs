@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using RecipeApp.Repository.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using RecipeApp.Repository.Entities;
+using RecipeApp.Repository.Interfaces;
 
 namespace RecipeApp.Repository.Repositories
 {
@@ -17,40 +18,39 @@ namespace RecipeApp.Repository.Repositories
             ctx = context;
         }
 
-        public Conversion AddItem(Conversion item)
+        public async Task<List<Conversion>> GetAll()
+        {
+            return await ctx.Conversions.ToListAsync();
+        }
+
+        public async Task<Conversion> GetById(int id)
+        {
+            return await ctx.Conversions.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<Conversion> AddItem(Conversion item)
         {
             ctx.Conversions.Add(item);
-            ctx.Save();
+            await ctx.Save();
             return item;
         }
 
-        public void DeleteItem(int id)
+        public async Task<Conversion> UpdateItem(int id, Conversion conversion)
         {
-            var conversion = ctx.Conversions.FirstOrDefault(x => x.Id == id);
-            ctx.Conversions.Remove(conversion);
-            ctx.Save();
-        }
-
-        public List<Conversion> GetAll()
-        {
-            return ctx.Conversions.ToList();
-        }
-
-        public Conversion GetById(int id)
-        {
-            return ctx.Conversions.FirstOrDefault(x => x.Id == id);
-        }
-
-        public Conversion UpdateItem(int id, Conversion conversion)
-        {
-            var c = ctx.Conversions.FirstOrDefault(x => x.Id == id);
+            var c = await ctx.Conversions.FirstOrDefaultAsync(x => x.Id == id);
             c.IngredientId1 = conversion.IngredientId1;
             c.IngredientId2 = conversion.IngredientId2;
             c.ConversionRatio = conversion.ConversionRatio;
             c.IsBidirectional = conversion.IsBidirectional;
-            c.Id = id;
-            ctx.Save();
+            await ctx.Save();
             return c;
+        }
+
+        public async Task DeleteItem(int id)
+        {
+            var conversion = await ctx.Conversions.FirstOrDefaultAsync(x => x.Id == id);
+            ctx.Conversions.Remove(conversion);
+            await ctx.Save();
         }
     }
 }

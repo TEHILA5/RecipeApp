@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
 
@@ -17,44 +18,42 @@ namespace RecipeApp.Repository.Repositories
             ctx = context;
         }
 
-        public RecipeIngredient AddItem(RecipeIngredient item)
+        public async Task<List<RecipeIngredient>> GetAll()
+        {
+            return await ctx.RecipeIngredients.ToListAsync();
+        }
+
+        public async Task<RecipeIngredient> GetById(int id)
+        {
+            // RecipeIngredient אין לו Id יחיד — חיפוש לפי RecipeId
+            return await ctx.RecipeIngredients.FirstOrDefaultAsync(x => x.RecipeId == id);
+        }
+
+        public async Task<RecipeIngredient> AddItem(RecipeIngredient item)
         {
             ctx.RecipeIngredients.Add(item);
-            ctx.Save();
+            await ctx.Save();
             return item;
         }
 
-        public void DeleteItem(int id)
+        public async Task<RecipeIngredient> UpdateItem(int id, RecipeIngredient recipeIngredient)
         {
-            // RecipeIngredient אין לו Id יחיד - צריך RecipeId + IngredientId
-            // זו דוגמה - צריך להתאים לצורך
-            var ri = ctx.RecipeIngredients.FirstOrDefault(x => x.RecipeId == id);
-            ctx.RecipeIngredients.Remove(ri);
-            ctx.Save();
-        }
-
-        public List<RecipeIngredient> GetAll()
-        {
-            return ctx.RecipeIngredients.ToList();
-        }
-
-        public RecipeIngredient GetById(int id)
-        {
-            // RecipeIngredient אין לו Id יחיד
-            return ctx.RecipeIngredients.FirstOrDefault(x => x.RecipeId == id);
-        }
-
-        public RecipeIngredient UpdateItem(int id, RecipeIngredient recipeIngredient)
-        {
-            var ri = ctx.RecipeIngredients.FirstOrDefault(x =>
+            var ri = await ctx.RecipeIngredients.FirstOrDefaultAsync(x =>
                 x.RecipeId == recipeIngredient.RecipeId &&
                 x.IngredientId == recipeIngredient.IngredientId);
-
             ri.Quantity = recipeIngredient.Quantity;
             ri.Unit = recipeIngredient.Unit;
             ri.Importance = recipeIngredient.Importance;
-            ctx.Save();
+            await ctx.Save();
             return ri;
+        }
+
+        public async Task DeleteItem(int id)
+        {
+            // RecipeIngredient אין לו Id יחיד — מחיקה לפי RecipeId
+            var ri = await ctx.RecipeIngredients.FirstOrDefaultAsync(x => x.RecipeId == id);
+            ctx.RecipeIngredients.Remove(ri);
+            await ctx.Save();
         }
     }
 }

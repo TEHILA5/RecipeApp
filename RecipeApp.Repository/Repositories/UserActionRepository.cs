@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
 
@@ -17,33 +18,26 @@ namespace RecipeApp.Repository.Repositories
             ctx = context;
         }
 
-        public UserAction AddItem(UserAction item)
+        public async Task<List<UserAction>> GetAll()
+        {
+            return await ctx.UserActions.ToListAsync();
+        }
+
+        public async Task<UserAction> GetById(int id)
+        {
+            return await ctx.UserActions.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<UserAction> AddItem(UserAction item)
         {
             ctx.UserActions.Add(item);
-            ctx.Save();
+            await ctx.Save();
             return item;
         }
 
-        public void DeleteItem(int id)
+        public async Task<UserAction> UpdateItem(int id, UserAction userAction)
         {
-            var userAction = ctx.UserActions.FirstOrDefault(x => x.Id == id);
-            ctx.UserActions.Remove(userAction);
-            ctx.Save();
-        }
-
-        public List<UserAction> GetAll()
-        {
-            return ctx.UserActions.ToList();
-        }
-
-        public UserAction GetById(int id)
-        {
-            return ctx.UserActions.FirstOrDefault(x => x.Id == id);
-        }
-
-        public UserAction UpdateItem(int id, UserAction userAction)
-        {
-            var ua = ctx.UserActions.FirstOrDefault(x => x.Id == id);
+            var ua = await ctx.UserActions.FirstOrDefaultAsync(x => x.Id == id);
             ua.UserId = userAction.UserId;
             ua.ActionType = userAction.ActionType;
             ua.RecipeId = userAction.RecipeId;
@@ -51,9 +45,15 @@ namespace RecipeApp.Repository.Repositories
             ua.Content = userAction.Content;
             ua.Rating = userAction.Rating;
             ua.CreatedAt = userAction.CreatedAt;
-            ua.Id = id;
-            ctx.Save();
+            await ctx.Save();
             return ua;
+        }
+
+        public async Task DeleteItem(int id)
+        {
+            var userAction = await ctx.UserActions.FirstOrDefaultAsync(x => x.Id == id);
+            ctx.UserActions.Remove(userAction);
+            await ctx.Save();
         }
     }
 }

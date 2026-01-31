@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RecipeApp.Repository.Interfaces
+namespace RecipeApp.Services.Interfaces
 {
-    public interface IRepository<T>
+    public interface IService<T>
     {
         Task<List<T>> GetAll();
         Task<T> GetById(int id);
