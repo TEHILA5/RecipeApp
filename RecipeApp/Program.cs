@@ -1,4 +1,4 @@
-
+using RecipeApp.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using RecipeApp.DataContext;
 
@@ -9,10 +9,11 @@ namespace RecipeApp
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+            // DbContext
             builder.Services.AddDbContext<RecipeDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+            // Repositories
+            builder.Services.AddRepositories();
             // Add services to the container.
 
             builder.Services.AddControllers();
