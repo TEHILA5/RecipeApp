@@ -19,7 +19,6 @@ namespace RecipeApp.Repository.Repositories
             services.AddScoped<IRepository<RecipeIngredient>, RecipeIngredientRepository>();
             services.AddScoped<IRepository<Conversion>, ConversionRepository>();
             services.AddScoped<IRepository<UserAction>, UserActionRepository>();
-
             return services;
         }
     }
