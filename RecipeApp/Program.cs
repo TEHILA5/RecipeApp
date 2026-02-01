@@ -1,10 +1,15 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens; 
 using RecipeApp.DataContext;
 using RecipeApp.Repository.Interfaces;
 using RecipeApp.Repository.Repositories;
-using RecipeApp.Services.Services;
 using RecipeApp.Services.Mapping;
+using RecipeApp.Services.Services;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 namespace RecipeApp
 {
@@ -13,30 +18,73 @@ namespace RecipeApp
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            // רישום AutoMapper
+             
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "RecipeApp",
+                    Version = "v1"
+                });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter JWT token like: Bearer {your token}"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Type = SecuritySchemeType.Http,
+                            Scheme = "bearer"
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
+
+
+            //  JWT Authentication 
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(option =>
+                    option.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                    });
+
+            //   AutoMapper
             builder.Services.AddAutoMapper(typeof(MappingProfile));
-            // DbContext עם DI
+
+            //  DbContext 
             builder.Services.AddDbContext<RecipeDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            // IContext דרך ה DbContext
-            builder.Services.AddScoped<IContext>(provider => provider.GetRequiredService<RecipeDbContext>());
-            // Repositories
-            builder.Services.AddRepositories();
-            // Services
-            builder.Services.AddServices();
 
-            builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+            builder.Services.AddScoped<IContext>(provider =>
+                provider.GetRequiredService<RecipeDbContext>());
+
+            //  Repositories & Services 
+            builder.Services.AddRepositories();
+            builder.Services.AddServices();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-            }
-
+            //  Middleware Pipeline
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -44,13 +92,10 @@ namespace RecipeApp
             }
 
             app.UseHttpsRedirection();
-
             app.UseAuthentication();
             app.UseAuthorization();
 
-
             app.MapControllers();
-
             app.Run();
         }
     }
