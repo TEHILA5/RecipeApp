@@ -31,24 +31,29 @@ namespace RecipeApp
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
+                    Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below. Example: 'Bearer 12345abcdef'",
                     Name = "Authorization",
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Enter JWT token like: Bearer {your token}"
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
                 });
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Type = SecuritySchemeType.Http,
-                            Scheme = "bearer"
-                        },
-                        Array.Empty<string>()
-                    }
+                   {
+                       new OpenApiSecurityScheme
+                       {
+                          Reference = new OpenApiReference
+                          {
+                             Type = ReferenceType.SecurityScheme,
+                             Id = "Bearer"
+                          },
+                          Scheme = "oauth2",
+                          Name = "Bearer",
+                          In = ParameterLocation.Header
+                       },
+                       new List<string>()
+                   }
                 });
             });
 

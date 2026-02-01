@@ -66,7 +66,7 @@ namespace RecipeApp.Controllers
 
         // GET: api/User - רק מנהל
         [HttpGet]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<UserDto>>> GetAll()
         {
             try
