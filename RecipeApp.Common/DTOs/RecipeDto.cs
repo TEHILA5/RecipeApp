@@ -8,6 +8,7 @@ namespace RecipeApp.Common.DTOs
 {
     public enum RecipeCategory
     {
+        Sweats,  //ערך ברירת מחדל
         // עוגות ומאפים
         Cakes,                    // עוגות שכבות, עוגות יום הולדת
         Cupcakes,                 // קאפקייקס, מאפינס מתוקים
@@ -52,20 +53,21 @@ namespace RecipeApp.Common.DTOs
     public class RecipeDto
     {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public RecipeCategory Category { get; set; }
-        public string Instructions { get; set; }
-        public byte[] ArrImage { get; set; }  
-        public int Servings { get; set; }
-        public int Level { get; set; }
-        public int PrepTime { get; set; }
-        public int TotalTime { get; set; }
-        public List<RecipeIngredientDto> Ingredients { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public RecipeCategory? Category { get; set; }
+        public string? Instructions { get; set; }
+        public byte[]? ArrImage { get; set; }  
+        public int? Servings { get; set; }
+        public int? Level { get; set; }
+        public int? PrepTime { get; set; }
+        public int? TotalTime { get; set; }
+        public List<RecipeIngredientDto>? Ingredients { get; set; }
         public double? AverageRating { get; set; }
-        public int CommentCount { get; set; }
+        public int? CommentCount { get; set; }
     }
 
+    //רק למנהל
     public class RecipeCreateDto
     {
         public string Name { get; set; }
@@ -78,6 +80,20 @@ namespace RecipeApp.Common.DTOs
         public int PrepTime { get; set; }
         public int TotalTime { get; set; }
         public List<RecipeIngredientCreateDto> Ingredients { get; set; }
+    }
+
+    public class RecipeUpdateDto
+    {
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public RecipeCategory? Category { get; set; }
+        public string? Instructions { get; set; }
+        public byte[]? ArrImage { get; set; }
+        public int? Servings { get; set; }
+        public int? Level { get; set; }
+        public int? PrepTime { get; set; }
+        public int? TotalTime { get; set; }
+        public List<RecipeIngredientCreateDto>? Ingredients { get; set; }
     }
 
     public class RecipeSearchDto

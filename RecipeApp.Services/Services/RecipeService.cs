@@ -57,7 +57,35 @@ namespace RecipeApp.Services.Services
             var existing = await _recipeRepository.GetById(id)
                 ?? throw new KeyNotFoundException($"Recipe with id {id} not found.");
 
-            _mapper.Map(item, existing);
+            if (item.Name != null)
+                existing.Name = item.Name;
+            if (item.Description != null)
+                existing.Description = item.Description;
+            if (item.Category.HasValue)
+                existing.Category = item.Category.Value;
+            if (item.Instructions != null)
+                existing.Instructions = item.Instructions;
+            if (item.ArrImage?.Length > 0)
+                existing.ImageUrl = Convert.ToBase64String(item.ArrImage);
+            if (item.Servings.HasValue)
+                existing.Servings = item.Servings.Value;
+            if (item.Level.HasValue)
+                existing.Level = item.Level.Value;
+            if (item.PrepTime.HasValue)
+                existing.PrepTime = item.PrepTime.Value;
+            if (item.TotalTime.HasValue)
+                existing.TotalTime = item.TotalTime.Value;
+
+            if (item.Ingredients != null)
+            {
+                existing.RecipeIngredients = item.Ingredients
+                    .Select(ri => new RecipeIngredient
+                    {
+                        IngredientId = ri.IngredientId,
+                        Quantity = ri.Quantity,
+                        Unit = ri.Unit
+                    }).ToList();
+            }
             var updated = await _recipeRepository.UpdateItem(id, existing);
 
             var allActions = await _userActionRepository.GetAll();
@@ -70,6 +98,35 @@ namespace RecipeApp.Services.Services
             if (existing == null)
                 throw new KeyNotFoundException($"Recipe with id {id} not found.");
             await _recipeRepository.DeleteItem(id);
+        }
+
+        // Recipe-Specific Create/Update 
+
+        /// <summary>
+        /// יצירת מתכון חדש (Admin בלבד)
+        /// </summary>
+        public async Task<RecipeDto> CreateRecipe(RecipeCreateDto createDto)
+        {
+            var recipe = _mapper.Map<Recipe>(createDto);
+            var created = await _recipeRepository.AddItem(recipe);
+
+            var allActions = await _userActionRepository.GetAll();
+            return MapRecipeWithStats(created, allActions);
+        }
+
+        /// <summary>
+        /// עדכון מתכון (Admin בלבד)
+        /// </summary>
+        public async Task<RecipeDto> UpdateRecipe(int id, RecipeCreateDto updateDto)
+        {
+            var existing = await _recipeRepository.GetById(id)
+                ?? throw new KeyNotFoundException($"Recipe with id {id} not found.");
+
+            _mapper.Map(updateDto, existing);
+            var updated = await _recipeRepository.UpdateItem(id, existing);
+
+            var allActions = await _userActionRepository.GetAll();
+            return MapRecipeWithStats(updated, allActions);
         }
 
         // Recipe-Specific  
@@ -172,6 +229,11 @@ namespace RecipeApp.Services.Services
         private RecipeDto MapRecipeWithStats(Recipe recipe, List<UserAction> allActions)
         {
             var dto = _mapper.Map<RecipeDto>(recipe);
+
+            if (!string.IsNullOrEmpty(recipe.ImageUrl))
+            {
+                dto.ArrImage = Convert.FromBase64String(recipe.ImageUrl);
+            }
 
             var recipeComments = allActions
                 .Where(ua => ua.RecipeId == recipe.Id && ua.ActionType == UserActionType.Comment)

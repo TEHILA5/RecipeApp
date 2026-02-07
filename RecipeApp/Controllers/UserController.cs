@@ -31,7 +31,14 @@ namespace RecipeApp.Controllers
             {
                 var user = await _userService.Register(createDto);
                 var token = GenerateToken(user);
-                return Ok(new { user, token });
+                var userDto = new UserDto
+                {
+                    Name = user.Name,
+                    Phone = user.Phone,
+                    Email = user.Email,
+                    CreatedAt = user.CreatedAt
+                };
+                return Ok(new { user=userDto, token });
             }
             catch (InvalidOperationException ex)
             {
@@ -51,12 +58,100 @@ namespace RecipeApp.Controllers
             try
             {
                 var user = await _userService.Login(loginDto);
-                var token = GenerateToken(user);
-                return Ok(new { user, token });
+                var token = GenerateToken(user); 
+                var userDto = new UserDto
+                {
+                    Name = user.Name,
+                    Phone = user.Phone,
+                    Email = user.Email,
+                    CreatedAt = user.CreatedAt
+                };
+                return Ok(new { user=userDto, token });
             }
             catch (UnauthorizedAccessException ex)
             {
                 return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+        // GET: api/User/me - משתמש רואה פרטי עצמו
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> GetMe()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var user = await _userService.GetById(userId);
+
+                var userDto = new UserDto
+                {
+                    Name = user.Name,
+                    Phone = user.Phone,
+                    Email = user.Email,
+                    CreatedAt = user.CreatedAt
+                };
+
+                return Ok(userDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+        // PATCH: api/User/me -  למשתמש עדכון עצמי  
+        [HttpPatch("me")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UserUpdateDto updateDto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();  
+                var userToUpdate = new UserAdminDto
+                {
+                    Id = userId,
+                    Name = updateDto.Name,
+                    Phone = updateDto.Phone,
+                    Email = updateDto.Email
+                };
+
+                var updated = await _userService.UpdateItem(userId, userToUpdate);
+
+                var userDto = new UserDto
+                {
+                    Name = updated.Name,
+                    Phone = updated.Phone,
+                    Email = updated.Email,
+                    CreatedAt = updated.CreatedAt
+                };
+
+                return Ok(userDto);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+        // DELETE: api/User/me - מחיקת עצמי
+        [HttpDelete("me")]
+        [Authorize]
+        public async Task<IActionResult> DeleteMe()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                await _userService.DeleteItem(userId);
+                return NoContent();
             }
             catch (Exception ex)
             {
@@ -72,7 +167,16 @@ namespace RecipeApp.Controllers
             try
             {
                 var users = await _userService.GetAll();
-                return Ok(users);
+                var userAdminDtos = users.Select(u => new UserAdminDto
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Phone = u.Phone,
+                    Email = u.Email,
+                    CreatedAt = u.CreatedAt
+                }).ToList();
+
+                return Ok(userAdminDtos);
             }
             catch (Exception ex)
             {
@@ -80,21 +184,25 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // GET: api/User/5 - משתמש לעצמו/מנהל
+        // GET: api/User/5 -  מנהל
         [HttpGet("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<UserDto>> GetById(int id)
         {
             try
             {
-                var currentUserId = GetCurrentUserId();
-                
-                // משתמש יכול לראות רק את עצמו, אלא אם כן הוא Admin
-                if (currentUserId != id && !IsAdmin())
-                    return Forbid();
-
                 var user = await _userService.GetById(id);
-                return Ok(user);
+
+                var userAdminDto = new UserAdminDto
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Phone = user.Phone,
+                    Email = user.Email,
+                    CreatedAt = user.CreatedAt
+                };
+
+                return Ok(userAdminDto);
             }
             catch (KeyNotFoundException ex)
             {
@@ -106,25 +214,41 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // PUT: api/User/5 - משתמש לעצמו/מנהל
-        [HttpPut("{id}")]
-        [Authorize]
-        public async Task<ActionResult<UserDto>> Update(int id, [FromBody] UserDto userDto)
+        // PATCH: api/User/5 -  מנהל
+        [HttpPatch("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserAdminDto>> UpdateUser(int id, [FromBody] UserAdminUpdateDto updateDto)
         {
             try
             {
-                var currentUserId = GetCurrentUserId();
-                
-                // משתמש יכול לערוך רק את עצמו
-                if (currentUserId != id && !IsAdmin())
-                    return Forbid();
+                var userToUpdate = new UserAdminDto
+                {
+                    Id = id,
+                    Name = updateDto.Name,
+                    Phone = updateDto.Phone,
+                    Email = updateDto.Email
+                };
 
-                var updated = await _userService.UpdateItem(id, userDto);
-                return Ok(updated);
+                var updated = await _userService.UpdateItem(id, userToUpdate);
+
+                var userAdminDto = new UserAdminDto
+                {
+                    Id = updated.Id,
+                    Name = updated.Name,
+                    Phone = updated.Phone,
+                    Email = updated.Email,
+                    CreatedAt = updated.CreatedAt
+                };
+
+                return Ok(userAdminDto);
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -132,18 +256,13 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // DELETE: api/User/:id - משתמש לעצמו/מנהל
+        // DELETE: api/User/:id -  מנהל
         [HttpDelete("{id}")]
-        [Authorize]
-        public async Task<IActionResult> Delete(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
         {
             try
             {
-                var currentUserId = GetCurrentUserId();
-                
-                if (currentUserId != id && !IsAdmin())
-                    return Forbid();
-
                 await _userService.DeleteItem(id);
                 return NoContent();
             }
@@ -157,31 +276,14 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // GET: api/User/me - מידע על המשתמש המחובר
-        [HttpGet("me")]
-        [Authorize]
-        public async Task<ActionResult<UserDto>> GetCurrentUser()
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var user = await _userService.GetById(userId);
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
-        }
 
-        // ========== Helper Methods ==========
-        
-        private string GenerateToken(UserDto user)
+        // Helper Methods 
+
+        private string GenerateToken(UserAdminDto user)
         {
             var secret = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var credentials = new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
-            
-            // קביעת Role - Admin או User
+
             var role = IsAdminEmail(user.Email) ? "Admin" : "User";
 
             var claims = new[]

@@ -16,8 +16,7 @@ namespace RecipeApp.Common.DTOs
     {
         public int Id { get; set; }
 
-        public UserActionType ActionType { get; set; }
-        public int UserId { get; set; }
+        public UserActionType ActionType { get; set; } 
 
         public int? RecipeId { get; set; }
         public string? RecipeName { get; set; }
@@ -33,14 +32,12 @@ namespace RecipeApp.Common.DTOs
         public DateTime CreatedAt { get; set; }
     }
     public class BookCreateDto
-    {
-        public int UserId { get; set; }
+    { 
         public int RecipeId { get; set; }
     }
 
     public class CommentCreateDto
-    {
-        public int UserId { get; set; }
+    { 
         public int RecipeId { get; set; }
 
         public string Content { get; set; }
@@ -48,8 +45,7 @@ namespace RecipeApp.Common.DTOs
     }
 
     public class HistoryCreateDto
-    {
-        public int UserId { get; set; }
+    { 
         public RecipeCategory Category { get; set; }
     }
 

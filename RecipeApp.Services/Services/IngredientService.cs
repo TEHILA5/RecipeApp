@@ -82,5 +82,19 @@ namespace RecipeApp.Services.Services
 
             return ingredient != null ? _mapper.Map<IngredientDto>(ingredient) : null!;
         }
+
+        /// <summary>
+        /// יצירת רכיב חדש (Admin בלבד)
+        /// </summary>
+        public async Task<IngredientDto> CreateIngredient(IngredientCreateDto createDto)
+        {
+            var existing = await GetByName(createDto.Name);
+            if (existing != null)
+                throw new InvalidOperationException($"Ingredient '{createDto.Name}' already exists.");
+
+            var ingredient = _mapper.Map<Ingredient>(createDto);
+            var created = await _ingredientRepository.AddItem(ingredient);
+            return _mapper.Map<IngredientDto>(created);
+        }
     }
 }

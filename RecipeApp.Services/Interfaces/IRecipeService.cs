@@ -12,5 +12,7 @@ namespace RecipeApp.Services.Interfaces
         Task<List<RecipeDto>> SearchByCategory(string category);
         Task<List<RecipeDto>> SearchByIngredients(List<string> ingredients);
         Task<List<RecipeDto>> GetRecommendedForUser(int userId);
+        Task<RecipeDto> CreateRecipe(RecipeCreateDto createDto);
+        Task<RecipeDto> UpdateRecipe(int id, RecipeCreateDto updateDto);
     }
 }

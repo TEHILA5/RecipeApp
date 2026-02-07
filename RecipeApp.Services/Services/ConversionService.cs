@@ -67,12 +67,20 @@ namespace RecipeApp.Services.Services
             var existing = await _conversionRepository.GetById(id)
                 ?? throw new KeyNotFoundException($"Conversion with id {id} not found.");
 
-            _mapper.Map(item, existing);
+            var ingredients = await _ingredientRepository.GetAll();
+             
+            if (item.ConversionRatio.HasValue)
+                existing.ConversionRatio = item.ConversionRatio.Value;
+
+            if (item.IsBidirectional.HasValue)
+                existing.IsBidirectional = item.IsBidirectional.Value;
+
             var updated = await _conversionRepository.UpdateItem(id, existing);
 
             var enriched = await EnrichConversions(new[] { updated });
             return enriched.First();
         }
+
 
         public async Task DeleteItem(int id)
         { 
@@ -122,6 +130,33 @@ namespace RecipeApp.Services.Services
             }
 
             return null!;
+        }
+
+        /// <summary>
+        /// יצירת המרה חדשה (Admin בלבד)
+        /// </summary>
+        public async Task<ConversionDto> CreateConversion(ConversionCreateDto createDto)
+        {
+            // בדיקה שהרכיבים קיימים
+            var ingredient1 = await _ingredientRepository.GetById(createDto.IngredientId1);
+            if (ingredient1 == null)
+                throw new KeyNotFoundException($"Ingredient with id {createDto.IngredientId1} not found.");
+
+            var ingredient2 = await _ingredientRepository.GetById(createDto.IngredientId2);
+            if (ingredient2 == null)
+                throw new KeyNotFoundException($"Ingredient with id {createDto.IngredientId2} not found.");
+
+            // בדיקה שההמרה לא קיימת
+            var existing = await FindConversion(createDto.IngredientId1, createDto.IngredientId2);
+            if (existing != null)
+                throw new InvalidOperationException(
+                    $"Conversion between '{ingredient1.Name}' and '{ingredient2.Name}' already exists.");
+
+            var conversion = _mapper.Map<Conversion>(createDto);
+            var created = await _conversionRepository.AddItem(conversion);
+
+            var enriched = await EnrichConversions(new[] { created });
+            return enriched.First();
         }
 
         //  Helpers  

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
@@ -54,11 +55,11 @@ namespace RecipeApp.Controllers
         // POST: api/Conversion - רק Admin
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ConversionDto>> Create([FromBody] ConversionDto conversionDto)
+        public async Task<ActionResult<ConversionDto>> Create([FromBody] ConversionCreateDto createDto)
         {
             try
             {
-                var created = await _conversionService.AddItem(conversionDto);
+                var created = await _conversionService.CreateConversion(createDto);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
             }
             catch (InvalidOperationException ex)
@@ -75,13 +76,20 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // PUT: api/Conversion/:id - רק Admin
-        [HttpPut("{id}")]
+        // PATCH: api/Conversion/:id - רק Admin
+        [HttpPatch("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ConversionDto>> Update(int id, [FromBody] ConversionDto conversionDto)
+        public async Task<ActionResult<ConversionDto>> Update(int id, [FromBody] ConversionUpdateDto updateDto)
         {
             try
             {
+                var conversionDto = new ConversionDto
+                {
+                    Id = id,
+                    ConversionRatio = updateDto.ConversionRatio,
+                    IsBidirectional = updateDto.IsBidirectional 
+                };
+
                 var updated = await _conversionService.UpdateItem(id, conversionDto);
                 return Ok(updated);
             }

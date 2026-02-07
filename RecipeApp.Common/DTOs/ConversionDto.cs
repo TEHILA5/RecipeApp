@@ -9,10 +9,10 @@ namespace RecipeApp.Common.DTOs
     public class ConversionDto
     {
         public int Id { get; set; }
-        public string Ingredient1Name { get; set; }
-        public string Ingredient2Name { get; set; }
-        public decimal ConversionRatio { get; set; }
-        public bool IsBidirectional { get; set; }
+        public string? Ingredient1Name { get; set; }
+        public string? Ingredient2Name { get; set; }
+        public decimal? ConversionRatio { get; set; }
+        public bool? IsBidirectional { get; set; }
     }
 
     public class ConversionCreateDto
@@ -21,5 +21,11 @@ namespace RecipeApp.Common.DTOs
         public int IngredientId2 { get; set; }
         public decimal ConversionRatio { get; set; }
         public bool IsBidirectional { get; set; }
+    }
+
+    public class ConversionUpdateDto
+    { 
+        public decimal? ConversionRatio { get; set; }
+        public bool? IsBidirectional { get; set; }
     }
 }

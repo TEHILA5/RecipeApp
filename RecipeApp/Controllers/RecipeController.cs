@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
-using System.Security.Claims;
 
 namespace RecipeApp.Controllers
 {
@@ -55,11 +56,11 @@ namespace RecipeApp.Controllers
         // POST: api/Recipe - רק מנהל יכול ליצור מתכונים
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<RecipeDto>> Create([FromBody] RecipeDto recipeDto)
+        public async Task<ActionResult<RecipeDto>> Create([FromBody] RecipeCreateDto createDto)
         {
             try
             {
-                var created = await _recipeService.AddItem(recipeDto);
+                var created = await _recipeService.CreateRecipe(createDto);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
             }
             catch (Exception ex)
@@ -68,13 +69,33 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // PUT: api/Recipe/:id - רק מנהל יכול לערוך
-        [HttpPut("{id}")]
+        // PATCH: api/Recipe/:id - רק מנהל יכול לערוך
+        [HttpPatch("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<RecipeDto>> Update(int id, [FromBody] RecipeDto recipeDto)
+        public async Task<ActionResult<RecipeDto>> Update(int id, [FromBody] RecipeUpdateDto updateDto)
         {
             try
             {
+                var recipeDto = new RecipeDto
+                {
+                    Id = id,
+                    Name = updateDto.Name,
+                    Description = updateDto.Description,
+                    Category = updateDto.Category,
+                    Instructions = updateDto.Instructions,
+                    ArrImage = updateDto.ArrImage,
+                    Servings = updateDto.Servings,
+                    Level = updateDto.Level,
+                    PrepTime = updateDto.PrepTime,
+                    TotalTime = updateDto.TotalTime,
+                    Ingredients = updateDto.Ingredients?.Select(i => new RecipeIngredientDto
+                    {
+                        IngredientId = i.IngredientId,
+                        Quantity = i.Quantity,
+                        Unit = i.Unit
+                    }).ToList()
+                };
+
                 var updated = await _recipeService.UpdateItem(id, recipeDto);
                 return Ok(updated);
             }

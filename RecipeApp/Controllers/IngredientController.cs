@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
@@ -54,11 +55,11 @@ namespace RecipeApp.Controllers
         // POST: api/Ingredient - רק Admin
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IngredientDto>> Create([FromBody] IngredientDto ingredientDto)
+        public async Task<ActionResult<IngredientDto>> Create([FromBody] IngredientCreateDto createDto)
         {
             try
             {
-                var created = await _ingredientService.AddItem(ingredientDto);
+                var created = await _ingredientService.CreateIngredient(createDto);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
             }
             catch (InvalidOperationException ex)
@@ -71,8 +72,8 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // PUT: api/Ingredient/:id - רק Admin
-        [HttpPut("{id}")]
+        // PATCH : api/Ingredient/:id - רק Admin
+        [HttpPatch("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IngredientDto>> Update(int id, [FromBody] IngredientDto ingredientDto)
         {

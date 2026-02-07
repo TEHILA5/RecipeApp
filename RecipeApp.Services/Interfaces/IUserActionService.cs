@@ -13,5 +13,9 @@ namespace RecipeApp.Services.Interfaces
         Task<List<UserActionDto>> GetUserHistory(int userId);
         Task<List<UserActionDto>> GetUserSavedRecipes(int userId);
         Task<UserPreferencesDto> GetUserPreferences(int userId);
+        // יצירה לפי סוג
+        Task<UserActionDto> CreateComment(int userId, CommentCreateDto createDto);
+        Task<UserActionDto> CreateBook(int userId, BookCreateDto createDto);
+        Task<UserActionDto> CreateHistory(int userId, HistoryCreateDto createDto);
     }
 }

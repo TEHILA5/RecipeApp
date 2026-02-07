@@ -10,5 +10,6 @@ namespace RecipeApp.Services.Interfaces
     public interface IConversionService : IService<ConversionDto>
     {
         Task<ConversionDto> FindConversion(int ingredientId1, int ingredientId2);
+        Task<ConversionDto> CreateConversion(ConversionCreateDto createDto);
     }
 }

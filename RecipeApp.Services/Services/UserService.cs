@@ -21,34 +21,43 @@ namespace RecipeApp.Services.Services
         }
 
         //Generic CRUD
-        public async Task<List<UserDto>> GetAll()
+        public async Task<List<UserAdminDto>> GetAll()
         {
             var users = await _userRepository.GetAll();
-            return _mapper.Map<List<UserDto>>(users);
+            return _mapper.Map<List<UserAdminDto>>(users);
         }
 
-        public async Task<UserDto> GetById(int id)
+        public async Task<UserAdminDto> GetById(int id)
         {
             var user = await _userRepository.GetById(id)
                 ?? throw new KeyNotFoundException($"User with id {id} not found.");
-            return _mapper.Map<UserDto>(user);
+            return _mapper.Map<UserAdminDto>(user);
         }
 
-        public async Task<UserDto> AddItem(UserDto item)
-        {
-            var user = _mapper.Map<User>(item);
-            var created = await _userRepository.AddItem(user);
-            return _mapper.Map<UserDto>(created);
-        }
-
-        public async Task<UserDto> UpdateItem(int id, UserDto item)
+        public async Task<UserAdminDto> UpdateItem(int id, UserAdminDto item)
         {
             var existing = await _userRepository.GetById(id)
                 ?? throw new KeyNotFoundException($"User with id {id} not found.");
 
-            _mapper.Map(item, existing);
+            if (!string.IsNullOrWhiteSpace(item.Name))
+                existing.Name = item.Name;
+
+            if (!string.IsNullOrWhiteSpace(item.Phone))
+                existing.Phone = item.Phone;
+
+            // בדיקת אימייל אם השתנה
+            if (!string.IsNullOrEmpty(item.Email) &&
+                !string.Equals(item.Email, existing.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                // בדיקה שהאימייל החדש לא קיים אצל משתמש אחר
+                if (await EmailExists(item.Email))
+                    throw new InvalidOperationException("Email already exists.");
+
+                existing.Email = item.Email;
+            }
+
             var updated = await _userRepository.UpdateItem(id, existing);
-            return _mapper.Map<UserDto>(updated);
+            return _mapper.Map<UserAdminDto>(updated);
         }
 
         public async Task DeleteItem(int id)
@@ -60,34 +69,36 @@ namespace RecipeApp.Services.Services
         }
 
         //   User-Specific  
-        public async Task<UserDto> Register(UserCreateDto createDto)
-        {
+        public async Task<UserAdminDto> Register(UserCreateDto createDto)
+        { 
             if (await EmailExists(createDto.Email))
                 throw new InvalidOperationException("Email already exists.");
 
             var user = _mapper.Map<User>(createDto);
             user.PasswordHash = HashPassword(createDto.Password);
+            user.CreatedAt = DateTime.UtcNow;
 
             var created = await _userRepository.AddItem(user);
-            return _mapper.Map<UserDto>(created);
+            return _mapper.Map<UserAdminDto>(created);
         }
 
-        public async Task<UserDto> Login(UserLoginDto loginDto)
+        public async Task<UserAdminDto> Login(UserLoginDto loginDto)
         {
             var users = await _userRepository.GetAll();
-            var user = users.FirstOrDefault(u => u.Email == loginDto.Email)
+            var user = users.FirstOrDefault(u =>
+                string.Equals(u.Email, loginDto.Email, StringComparison.OrdinalIgnoreCase))
                 ?? throw new UnauthorizedAccessException("Invalid email or password.");
 
             if (!VerifyPassword(loginDto.Password, user.PasswordHash))
                 throw new UnauthorizedAccessException("Invalid email or password.");
 
-            return _mapper.Map<UserDto>(user);
+            return _mapper.Map<UserAdminDto>(user);
         }
 
         public async Task<bool> EmailExists(string email)
         {
             var users = await _userRepository.GetAll();
-            return users.Any(u => u.Email == email);
+            return users.Any(u => string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase));
         }
 
         //  Password Hashing  

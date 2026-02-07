@@ -75,6 +75,64 @@ namespace RecipeApp.Services.Services
             await _userActionRepository.DeleteItem(id);
         }
 
+        // Create Methods
+         
+        // יצירת תגובה חדשה
+        public async Task<UserActionDto> CreateComment(int userId, CommentCreateDto createDto)
+        { 
+            var recipe = await _recipeRepository.GetById(createDto.RecipeId);
+            if (recipe == null)
+                throw new KeyNotFoundException($"Recipe with id {createDto.RecipeId} not found.");
+             
+            var userAction = _mapper.Map<UserAction>(createDto);
+            userAction.UserId = userId;
+            userAction.CreatedAt = DateTime.UtcNow;
+             
+            var created = await _userActionRepository.AddItem(userAction);
+             
+            var enriched = await EnrichActions(new[] { created });
+            return enriched.First();
+        }
+         
+        // שמירת מתכון
+        public async Task<UserActionDto> CreateBook(int userId, BookCreateDto createDto)
+        { 
+            var recipe = await _recipeRepository.GetById(createDto.RecipeId);
+            if (recipe == null)
+                throw new KeyNotFoundException($"Recipe with id {createDto.RecipeId} not found.");
+             
+            var allActions = await _userActionRepository.GetAll();
+            var alreadySaved = allActions.Any(ua =>
+                ua.UserId == userId &&
+                ua.ActionType == UserActionType.Book &&
+                ua.RecipeId == createDto.RecipeId);
+
+            if (alreadySaved)
+                throw new InvalidOperationException("Recipe is already saved.");
+             
+            var userAction = _mapper.Map<UserAction>(createDto);
+            userAction.UserId = userId;
+            userAction.CreatedAt = DateTime.UtcNow;
+             
+            var created = await _userActionRepository.AddItem(userAction);
+             
+            var enriched = await EnrichActions(new[] { created });
+            return enriched.First();
+        }
+         
+        // רישום חיפוש בהיסטוריה
+        public async Task<UserActionDto> CreateHistory(int userId, HistoryCreateDto createDto)
+        { 
+            var userAction = _mapper.Map<UserAction>(createDto);
+            userAction.UserId = userId;
+            userAction.CreatedAt = DateTime.UtcNow;
+             
+            var created = await _userActionRepository.AddItem(userAction);
+             
+            var enriched = await EnrichActions(new[] { created });
+            return enriched.First();
+        }
+
         //  UserAction-Specific  
         public async Task<List<UserActionDto>> GetUserComments(int userId)
         {
@@ -172,8 +230,10 @@ namespace RecipeApp.Services.Services
                 {
                     dto.RecipeName = recipe.Name;
                     dto.Category = recipe.Category;
-                    // ArrImage → URL המרה בשכבת ה-Controller
-                    dto.RecipeImageUrl = null;
+                    if (!string.IsNullOrEmpty(recipe.ImageUrl))
+                    {
+                        dto.RecipeImageUrl = $"data:image/jpeg;base64,{recipe.ImageUrl}";
+                    }
                 }
 
                 return dto;

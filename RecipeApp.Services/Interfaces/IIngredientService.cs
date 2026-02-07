@@ -10,5 +10,6 @@ namespace RecipeApp.Services.Interfaces
     public interface IIngredientService : IService<IngredientDto>
     {
         Task<IngredientDto> GetByName(string name);
+        Task<IngredientDto> CreateIngredient(IngredientCreateDto createDto);
     }
 }
