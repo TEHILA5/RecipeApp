@@ -11,5 +11,6 @@ namespace RecipeApp.Services.Interfaces
     {
         Task<IngredientDto> GetByName(string name);
         Task<IngredientDto> CreateIngredient(IngredientCreateDto createDto);
+        Task<IngredientDto> UpdateIngredient(int id, IngredientUpdateDto updateDto);
     }
 }

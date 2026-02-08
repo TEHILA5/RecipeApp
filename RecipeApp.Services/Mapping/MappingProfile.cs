@@ -50,15 +50,15 @@ namespace RecipeApp.Services.Mapping
             // Recipe
             CreateMap<Recipe, RecipeDto>()
                 .ForMember(dest => dest.ArrImage, opt => opt.MapFrom(src =>
-                    string.IsNullOrEmpty(src.ImageUrl) ? null : Convert.FromBase64String(src.ImageUrl)))
+                    string.IsNullOrEmpty(src.ImageUrl) ? null : src.ImageUrl))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
-                .ForMember(dest => dest.Ingredients, opt => opt.Ignore())
+                .ForMember(dest => dest.Ingredients, opt => opt.MapFrom(src => src.RecipeIngredients))
                 .ForMember(dest => dest.AverageRating, opt => opt.Ignore())
                 .ForMember(dest => dest.CommentCount, opt => opt.Ignore());
 
             CreateMap<RecipeDto, Recipe>()
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src =>
-                    src.ArrImage == null ? null : Convert.ToBase64String(src.ArrImage)))
+                    src.ArrImage == null ? null : src.ArrImage))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => (src.Category)))
                 .ForMember(dest => dest.RecipeIngredients, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
@@ -67,7 +67,7 @@ namespace RecipeApp.Services.Mapping
             CreateMap<RecipeCreateDto, Recipe>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src =>
-                    src.ArrImage == null ? null : Convert.ToBase64String(src.ArrImage)))
+                    src.ArrImage == null ? null : src.ArrImage))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
                 .ForMember(dest => dest.RecipeIngredients, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
@@ -91,9 +91,7 @@ namespace RecipeApp.Services.Mapping
 
             CreateMap<RecipeIngredientCreateDto, RecipeIngredient>()
                 .ForMember(dest => dest.Recipe, opt => opt.Ignore())
-                .ForMember(dest => dest.Ingredient, opt => opt.Ignore())
-                .ForMember(dest => dest.Importance, opt => opt.MapFrom(src =>
-                    Enum.Parse<IngredientImportance>(src.Importance)));
+                .ForMember(dest => dest.Ingredient, opt => opt.Ignore());
 
             // Conversion
             CreateMap<Conversion, ConversionDto>()

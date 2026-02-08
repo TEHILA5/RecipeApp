@@ -16,4 +16,8 @@ namespace RecipeApp.Common.DTOs
     {
         public string Name { get; set; }
     }
+    public class IngredientUpdateDto
+    {
+        public string Name { get; set; }
+    }
 }

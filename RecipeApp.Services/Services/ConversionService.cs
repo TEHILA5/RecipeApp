@@ -159,6 +159,31 @@ namespace RecipeApp.Services.Services
             return enriched.First();
         }
 
+        /// <summary>
+        /// עדכון המרה (Admin בלבד)
+        /// </summary>
+        public async Task<ConversionDto> UpdateConversion(int id, ConversionUpdateDto updateDto)
+        {
+            var existing = await _conversionRepository.GetById(id)
+                ?? throw new KeyNotFoundException($"Conversion with id {id} not found.");
+
+            // עדכן רק את השדות שסופקו
+            if (updateDto.ConversionRatio.HasValue)
+            {
+                existing.ConversionRatio = updateDto.ConversionRatio.Value;
+            }
+
+            if (updateDto.IsBidirectional.HasValue)
+            {
+                existing.IsBidirectional = updateDto.IsBidirectional.Value;
+            }
+
+            var updated = await _conversionRepository.UpdateItem(id, existing);
+
+            var enriched = await EnrichConversions(new[] { updated });
+            return enriched.First();
+        }
+
         //  Helpers  
         private async Task<List<ConversionDto>> EnrichConversions(IEnumerable<Conversion> conversions)
         {

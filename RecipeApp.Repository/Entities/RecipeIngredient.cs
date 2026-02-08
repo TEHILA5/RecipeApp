@@ -4,15 +4,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RecipeApp.Common.DTOs;
 
 namespace RecipeApp.Repository.Entities
 {
-    public enum IngredientImportance
-    {
-        Essential = 1,
-        Recommended = 2,
-        Optional = 3
-    }
 
     public class RecipeIngredient
     {

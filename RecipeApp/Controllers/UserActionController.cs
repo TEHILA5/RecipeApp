@@ -22,6 +22,10 @@ namespace RecipeApp.Controllers
         [HttpPost("comment")]
         public async Task<ActionResult<UserActionDto>> CreateComment([FromBody] CommentCreateDto createDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var userId = GetCurrentUserId();  
@@ -38,6 +42,10 @@ namespace RecipeApp.Controllers
         [HttpPost("book")]
         public async Task<ActionResult<UserActionDto>> CreateBook([FromBody] BookCreateDto createDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var userId = GetCurrentUserId();  
@@ -54,6 +62,10 @@ namespace RecipeApp.Controllers
         [HttpPost("history")]
         public async Task<ActionResult<UserActionDto>> CreateHistory([FromBody] HistoryCreateDto createDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var userId = GetCurrentUserId();  

@@ -11,5 +11,6 @@ namespace RecipeApp.Services.Interfaces
     {
         Task<ConversionDto> FindConversion(int ingredientId1, int ingredientId2);
         Task<ConversionDto> CreateConversion(ConversionCreateDto createDto);
+        Task<ConversionDto> UpdateConversion(int id, ConversionUpdateDto updateDto);
     }
 }

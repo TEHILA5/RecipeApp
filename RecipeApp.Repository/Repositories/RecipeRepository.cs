@@ -20,24 +20,40 @@ namespace RecipeApp.Repository.Repositories
 
         public async Task<List<Recipe>> GetAll()
         {
-            return await ctx.Recipes.ToListAsync();
+            return await ctx.Recipes
+               .Include(r => r.RecipeIngredients)
+                   .ThenInclude(ri => ri.Ingredient)
+               .ToListAsync();
         }
 
         public async Task<Recipe> GetById(int id)
         {
-            return await ctx.Recipes.FirstOrDefaultAsync(x => x.Id == id);
+            return await ctx.Recipes
+                .Include(r => r.RecipeIngredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
+        // ⭐ תיקון: לטעון בחזרה את המתכון עם ה-Ingredients
         public async Task<Recipe> AddItem(Recipe item)
         {
             ctx.Recipes.Add(item);
             await ctx.Save();
-            return item;
+
+            // טוען בחזרה את המתכון עם כל ה-Ingredients
+            return await ctx.Recipes
+                .Include(r => r.RecipeIngredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .FirstOrDefaultAsync(x => x.Id == item.Id);
         }
 
         public async Task<Recipe> UpdateItem(int id, Recipe recipe)
         {
-            var r = await ctx.Recipes.FirstOrDefaultAsync(x => x.Id == id);
+            var r = await ctx.Recipes
+               .Include(x => x.RecipeIngredients)
+                   .ThenInclude(ri => ri.Ingredient)
+               .FirstOrDefaultAsync(x => x.Id == id);
+
             r.Name = recipe.Name;
             r.Description = recipe.Description;
             r.Category = recipe.Category;
@@ -47,8 +63,13 @@ namespace RecipeApp.Repository.Repositories
             r.Level = recipe.Level;
             r.PrepTime = recipe.PrepTime;
             r.TotalTime = recipe.TotalTime;
+
             await ctx.Save();
-            return r;
+             
+            return await ctx.Recipes
+                .Include(x => x.RecipeIngredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task DeleteItem(int id)

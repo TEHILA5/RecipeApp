@@ -96,5 +96,28 @@ namespace RecipeApp.Services.Services
             var created = await _ingredientRepository.AddItem(ingredient);
             return _mapper.Map<IngredientDto>(created);
         }
+        /// <summary>
+        ///   עדכון רכיב 
+        /// </summary>
+        public async Task<IngredientDto> UpdateIngredient(int id, IngredientUpdateDto updateDto)
+        {
+            var existing = await _ingredientRepository.GetById(id)
+                ?? throw new KeyNotFoundException($"Ingredient with id {id} not found.");
+             
+            if (!string.IsNullOrWhiteSpace(updateDto.Name))
+            { 
+                if (!string.Equals(existing.Name, updateDto.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    var duplicate = await GetByName(updateDto.Name);
+                    if (duplicate != null)
+                        throw new InvalidOperationException($"Ingredient '{updateDto.Name}' already exists.");
+                }
+
+                existing.Name = updateDto.Name;
+            }
+
+            var updated = await _ingredientRepository.UpdateItem(id, existing);
+            return _mapper.Map<IngredientDto>(updated);
+        }
     }
 }

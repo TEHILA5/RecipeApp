@@ -27,6 +27,10 @@ namespace RecipeApp.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> Register([FromBody] UserCreateDto createDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var user = await _userService.Register(createDto);
@@ -55,6 +59,10 @@ namespace RecipeApp.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> Login([FromBody] UserLoginDto loginDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var user = await _userService.Login(loginDto);
@@ -82,7 +90,7 @@ namespace RecipeApp.Controllers
         [HttpGet("me")]
         [Authorize]
         public async Task<ActionResult<UserDto>> GetMe()
-        {
+        { 
             try
             {
                 var userId = GetCurrentUserId();
@@ -109,6 +117,10 @@ namespace RecipeApp.Controllers
         [Authorize]
         public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UserUpdateDto updateDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var userId = GetCurrentUserId();  
@@ -146,7 +158,7 @@ namespace RecipeApp.Controllers
         [HttpDelete("me")]
         [Authorize]
         public async Task<IActionResult> DeleteMe()
-        {
+        { 
             try
             {
                 var userId = GetCurrentUserId();
@@ -219,6 +231,10 @@ namespace RecipeApp.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<UserAdminDto>> UpdateUser(int id, [FromBody] UserAdminUpdateDto updateDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var userToUpdate = new UserAdminDto

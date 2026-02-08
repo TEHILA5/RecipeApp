@@ -57,6 +57,10 @@ namespace RecipeApp.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ConversionDto>> Create([FromBody] ConversionCreateDto createDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var created = await _conversionService.CreateConversion(createDto);
@@ -81,16 +85,14 @@ namespace RecipeApp.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ConversionDto>> Update(int id, [FromBody] ConversionUpdateDto updateDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
-                var conversionDto = new ConversionDto
-                {
-                    Id = id,
-                    ConversionRatio = updateDto.ConversionRatio,
-                    IsBidirectional = updateDto.IsBidirectional 
-                };
-
-                var updated = await _conversionService.UpdateItem(id, conversionDto);
+                var updated = await _conversionService.UpdateConversion(id, updateDto);  // ✅
                 return Ok(updated);
             }
             catch (KeyNotFoundException ex)
@@ -127,6 +129,10 @@ namespace RecipeApp.Controllers
         [HttpGet("find")]
         public async Task<ActionResult<ConversionDto>> FindConversion([FromQuery] int ingredientId1, [FromQuery] int ingredientId2)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var conversion = await _conversionService.FindConversion(ingredientId1, ingredientId2);

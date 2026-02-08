@@ -58,6 +58,10 @@ namespace RecipeApp.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<RecipeDto>> Create([FromBody] RecipeCreateDto createDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var created = await _recipeService.CreateRecipe(createDto);
@@ -74,6 +78,10 @@ namespace RecipeApp.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<RecipeDto>> Update(int id, [FromBody] RecipeUpdateDto updateDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var recipeDto = new RecipeDto
@@ -152,6 +160,10 @@ namespace RecipeApp.Controllers
         [HttpPost("search-by-ingredients")]
         public async Task<ActionResult<List<RecipeDto>>> SearchByIngredients([FromBody] List<string> ingredients)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var recipes = await _recipeService.SearchByIngredients(ingredients);

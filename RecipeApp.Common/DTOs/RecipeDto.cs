@@ -57,7 +57,7 @@ namespace RecipeApp.Common.DTOs
         public string? Description { get; set; }
         public RecipeCategory? Category { get; set; }
         public string? Instructions { get; set; }
-        public byte[]? ArrImage { get; set; }  
+        public string? ArrImage { get; set; }  
         public int? Servings { get; set; }
         public int? Level { get; set; }
         public int? PrepTime { get; set; }
@@ -74,7 +74,7 @@ namespace RecipeApp.Common.DTOs
         public string Description { get; set; }
         public RecipeCategory Category { get; set; }
         public string Instructions { get; set; }
-        public byte[] ArrImage { get; set; } 
+        public string ArrImage { get; set; } 
         public int Servings { get; set; }
         public int Level { get; set; }
         public int PrepTime { get; set; }
@@ -88,7 +88,7 @@ namespace RecipeApp.Common.DTOs
         public string? Description { get; set; }
         public RecipeCategory? Category { get; set; }
         public string? Instructions { get; set; }
-        public byte[]? ArrImage { get; set; }
+        public string? ArrImage { get; set; }
         public int? Servings { get; set; }
         public int? Level { get; set; }
         public int? PrepTime { get; set; }

@@ -57,6 +57,10 @@ namespace RecipeApp.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IngredientDto>> Create([FromBody] IngredientCreateDto createDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var created = await _ingredientService.CreateIngredient(createDto);
@@ -74,12 +78,17 @@ namespace RecipeApp.Controllers
 
         // PATCH : api/Ingredient/:id - רק Admin
         [HttpPatch("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IngredientDto>> Update(int id, [FromBody] IngredientDto ingredientDto)
+        [Authorize(Roles = "Admin")] 
+        public async Task<ActionResult<IngredientDto>> Update(int id, [FromBody] IngredientUpdateDto updateDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
-                var updated = await _ingredientService.UpdateItem(id, ingredientDto);
+                var updated = await _ingredientService.UpdateIngredient(id, updateDto);
                 return Ok(updated);
             }
             catch (KeyNotFoundException ex)
@@ -88,7 +97,7 @@ namespace RecipeApp.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Conflict(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -120,6 +129,10 @@ namespace RecipeApp.Controllers
         [HttpGet("by-name")]
         public async Task<ActionResult<IngredientDto>> GetByName([FromQuery] string name)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 var ingredient = await _ingredientService.GetByName(name);

@@ -66,7 +66,7 @@ namespace RecipeApp.Services.Services
             if (item.Instructions != null)
                 existing.Instructions = item.Instructions;
             if (item.ArrImage?.Length > 0)
-                existing.ImageUrl = Convert.ToBase64String(item.ArrImage);
+                existing.ImageUrl = item.ArrImage;
             if (item.Servings.HasValue)
                 existing.Servings = item.Servings.Value;
             if (item.Level.HasValue)
@@ -78,13 +78,26 @@ namespace RecipeApp.Services.Services
 
             if (item.Ingredients != null)
             {
-                existing.RecipeIngredients = item.Ingredients
-                    .Select(ri => new RecipeIngredient
-                    {
-                        IngredientId = ri.IngredientId,
-                        Quantity = ri.Quantity,
-                        Unit = ri.Unit
-                    }).ToList();
+                foreach (var ri in item.Ingredients)
+                {
+                    var existingIngredient = existing.RecipeIngredients
+                        .FirstOrDefault(x => x.IngredientId == ri.IngredientId);
+
+                    if (existingIngredient != null)
+                    { 
+                        existingIngredient.Quantity = ri.Quantity;
+                        existingIngredient.Unit = ri.Unit;
+                    }
+                    else
+                    { 
+                        existing.RecipeIngredients.Add(new RecipeIngredient
+                        {
+                            IngredientId = ri.IngredientId,
+                            Quantity = ri.Quantity,
+                            Unit = ri.Unit
+                        });
+                    }
+                }
             }
             var updated = await _recipeRepository.UpdateItem(id, existing);
 
@@ -107,11 +120,30 @@ namespace RecipeApp.Services.Services
         /// </summary>
         public async Task<RecipeDto> CreateRecipe(RecipeCreateDto createDto)
         {
-            var recipe = _mapper.Map<Recipe>(createDto);
-            var created = await _recipeRepository.AddItem(recipe);
+            var recipe = new Recipe
+            {
+                Name = createDto.Name,
+                Description = createDto.Description,
+                Category = createDto.Category,
+                Instructions = createDto.Instructions,
+                ImageUrl = createDto.ArrImage,
+                Servings = createDto.Servings,
+                Level = createDto.Level,
+                PrepTime = createDto.PrepTime,
+                TotalTime = createDto.TotalTime,
+                RecipeIngredients = createDto.Ingredients?.Select(i => new RecipeIngredient
+                {
+                    IngredientId = i.IngredientId,
+                    Quantity = i.Quantity,
+                    Unit = i.Unit,
+                    Importance = i.Importance
+                }).ToList() ?? new List<RecipeIngredient>()
+            };
+            var created = await _recipeRepository.AddItem(recipe); 
+            var loaded = await _recipeRepository.GetById(created.Id);
 
             var allActions = await _userActionRepository.GetAll();
-            return MapRecipeWithStats(created, allActions);
+            return MapRecipeWithStats(loaded, allActions);
         }
 
         /// <summary>
@@ -122,7 +154,29 @@ namespace RecipeApp.Services.Services
             var existing = await _recipeRepository.GetById(id)
                 ?? throw new KeyNotFoundException($"Recipe with id {id} not found.");
 
-            _mapper.Map(updateDto, existing);
+            existing.Name = updateDto.Name;
+            existing.Description = updateDto.Description;
+            existing.Category = updateDto.Category;
+            existing.Instructions = updateDto.Instructions;
+            existing.ImageUrl = updateDto.ArrImage;
+            existing.Servings = updateDto.Servings;
+            existing.Level = updateDto.Level;
+            existing.PrepTime = updateDto.PrepTime;
+            existing.TotalTime = updateDto.TotalTime;
+             
+            if (updateDto.Ingredients != null)
+            { 
+                existing.RecipeIngredients.Clear();
+                 
+                existing.RecipeIngredients = updateDto.Ingredients.Select(i => new RecipeIngredient
+                {
+                    IngredientId = i.IngredientId,
+                    Quantity = i.Quantity,
+                    Unit = i.Unit,
+                    Importance = i.Importance
+                }).ToList();
+            }
+
             var updated = await _recipeRepository.UpdateItem(id, existing);
 
             var allActions = await _userActionRepository.GetAll();
@@ -232,7 +286,7 @@ namespace RecipeApp.Services.Services
 
             if (!string.IsNullOrEmpty(recipe.ImageUrl))
             {
-                dto.ArrImage = Convert.FromBase64String(recipe.ImageUrl);
+                dto.ArrImage =  recipe.ImageUrl;
             }
 
             var recipeComments = allActions
