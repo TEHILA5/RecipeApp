@@ -1,6 +1,6 @@
 using System.Text;
-using FluentValidation.AspNetCore;
 using FluentValidation; 
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,9 +10,11 @@ using Microsoft.OpenApi.Models;
 using RecipeApp.DataContext;
 using RecipeApp.Repository.Interfaces;
 using RecipeApp.Repository.Repositories;
+using RecipeApp.Service.Interfaces;
+using RecipeApp.Service.Services;
 using RecipeApp.Services.Mapping;
 using RecipeApp.Services.Services;
-using RecipeApp.Services.Validators;
+using RecipeApp.Services.Validators;  
 
 namespace RecipeApp
 {
@@ -21,7 +23,7 @@ namespace RecipeApp
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+            builder.Services.AddScoped<IImageService, ImageService>();
             builder.Services.AddValidations();
             builder.Services.AddFluentValidationAutoValidation();
             builder.Services.AddFluentValidationClientsideAdapters();
@@ -107,6 +109,7 @@ namespace RecipeApp
             app.UseAuthorization();
 
             app.MapControllers();
+            app.UseStaticFiles();
             app.Run();
         }
     }

@@ -65,8 +65,8 @@ namespace RecipeApp.Services.Services
                 existing.Category = item.Category.Value;
             if (item.Instructions != null)
                 existing.Instructions = item.Instructions;
-            if (item.ArrImage?.Length > 0)
-                existing.ImageUrl = item.ArrImage;
+            if (item.ImageUrl?.Length > 0)
+                existing.ImageUrl = item.ImageUrl;
             if (item.Servings.HasValue)
                 existing.Servings = item.Servings.Value;
             if (item.Level.HasValue)
@@ -126,7 +126,7 @@ namespace RecipeApp.Services.Services
                 Description = createDto.Description,
                 Category = createDto.Category,
                 Instructions = createDto.Instructions,
-                ImageUrl = createDto.ArrImage,
+                ImageUrl = createDto.ImageUrl,
                 Servings = createDto.Servings,
                 Level = createDto.Level,
                 PrepTime = createDto.PrepTime,
@@ -158,7 +158,7 @@ namespace RecipeApp.Services.Services
             existing.Description = updateDto.Description;
             existing.Category = updateDto.Category;
             existing.Instructions = updateDto.Instructions;
-            existing.ImageUrl = updateDto.ArrImage;
+            existing.ImageUrl = updateDto.ImageUrl;
             existing.Servings = updateDto.Servings;
             existing.Level = updateDto.Level;
             existing.PrepTime = updateDto.PrepTime;
@@ -286,7 +286,7 @@ namespace RecipeApp.Services.Services
 
             if (!string.IsNullOrEmpty(recipe.ImageUrl))
             {
-                dto.ArrImage =  recipe.ImageUrl;
+                dto.ImageUrl =  recipe.ImageUrl;
             }
 
             var recipeComments = allActions

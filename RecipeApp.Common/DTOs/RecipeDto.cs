@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace RecipeApp.Common.DTOs
 {
@@ -57,7 +58,7 @@ namespace RecipeApp.Common.DTOs
         public string? Description { get; set; }
         public RecipeCategory? Category { get; set; }
         public string? Instructions { get; set; }
-        public string? ArrImage { get; set; }  
+        public string? ImageUrl { get; set; }  
         public int? Servings { get; set; }
         public int? Level { get; set; }
         public int? PrepTime { get; set; }
@@ -74,7 +75,7 @@ namespace RecipeApp.Common.DTOs
         public string Description { get; set; }
         public RecipeCategory Category { get; set; }
         public string Instructions { get; set; }
-        public string ArrImage { get; set; } 
+        public string ImageUrl { get; set; } 
         public int Servings { get; set; }
         public int Level { get; set; }
         public int PrepTime { get; set; }
@@ -88,7 +89,7 @@ namespace RecipeApp.Common.DTOs
         public string? Description { get; set; }
         public RecipeCategory? Category { get; set; }
         public string? Instructions { get; set; }
-        public string? ArrImage { get; set; }
+        public string? ImageUrl { get; set; }
         public int? Servings { get; set; }
         public int? Level { get; set; }
         public int? PrepTime { get; set; }
@@ -102,5 +103,57 @@ namespace RecipeApp.Common.DTOs
         public int? MaxPrepTime { get; set; }
         public int? MaxLevel { get; set; }
         public List<string> AvailableIngredients { get; set; }
+    }
+
+    /// <summary>
+    /// DTO ליצירת מתכון עם תמונה - תומך בשתי אופציות:
+    /// 1. העלאת קובץ תמונה (ImageFile)
+    /// 2. קישור לתמונה חיצונית (ImageUrl)
+    /// </summary>
+    public class RecipeCreateFormDto
+    {
+        public string Name { get; set; }
+        public string? Description { get; set; }
+        public RecipeCategory Category { get; set; }
+        public string Instructions { get; set; }
+
+        // אופציה 1: העלאת קובץ תמונה
+        public IFormFile? ImageFile { get; set; }
+
+        // אופציה 2: קישור לתמונה חיצונית
+        public string? ImageUrl { get; set; }
+
+        public int Servings { get; set; }
+        public int Level { get; set; }
+        public int PrepTime { get; set; }
+        public int TotalTime { get; set; }
+
+        // JSON string של מערך מרכיבים (כי multipart/form-data לא תומך באובייקטים מקוננים)
+        public string? IngredientsJson { get; set; }
+    }
+
+    /// <summary>
+    /// DTO לעדכון מתכון עם תמונה - כל השדות אופציונליים
+    /// </summary>
+    public class RecipeUpdateFormDto
+    {
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public RecipeCategory? Category { get; set; }
+        public string? Instructions { get; set; }
+
+        // אופציה 1: העלאת קובץ תמונה חדש
+        public IFormFile? ImageFile { get; set; }
+
+        // אופציה 2: קישור לתמונה חדש
+        public string? ImageUrl { get; set; }
+
+        public int? Servings { get; set; }
+        public int? Level { get; set; }
+        public int? PrepTime { get; set; }
+        public int? TotalTime { get; set; }
+
+        // JSON string של מערך מרכיבים
+        public string? IngredientsJson { get; set; }
     }
 }

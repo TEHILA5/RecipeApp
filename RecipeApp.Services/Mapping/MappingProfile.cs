@@ -49,7 +49,7 @@ namespace RecipeApp.Services.Mapping
 
             // Recipe
             CreateMap<Recipe, RecipeDto>()
-                .ForMember(dest => dest.ArrImage, opt => opt.MapFrom(src =>
+                .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src =>
                     string.IsNullOrEmpty(src.ImageUrl) ? null : src.ImageUrl))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
                 .ForMember(dest => dest.Ingredients, opt => opt.MapFrom(src => src.RecipeIngredients))
@@ -58,7 +58,7 @@ namespace RecipeApp.Services.Mapping
 
             CreateMap<RecipeDto, Recipe>()
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src =>
-                    src.ArrImage == null ? null : src.ArrImage))
+                    src.ImageUrl == null ? null : src.ImageUrl))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => (src.Category)))
                 .ForMember(dest => dest.RecipeIngredients, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
@@ -67,7 +67,7 @@ namespace RecipeApp.Services.Mapping
             CreateMap<RecipeCreateDto, Recipe>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src =>
-                    src.ArrImage == null ? null : src.ArrImage))
+                    src.ImageUrl == null ? null : src.ImageUrl))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
                 .ForMember(dest => dest.RecipeIngredients, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());

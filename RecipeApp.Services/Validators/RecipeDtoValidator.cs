@@ -31,7 +31,7 @@ namespace RecipeApp.Service.Validators
                 .MinimumLength(10).WithMessage("הוראות הכנה חייבות להכיל לפחות 10 תווים");
 
             // Image validation
-            RuleFor(x => x.ArrImage)
+            RuleFor(x => x.ImageUrl)
                 .NotEmpty().WithMessage("חובה לציין תמונה")
                 .MaximumLength(500).WithMessage("נתיב התמונה ארוך מדי");
 
@@ -100,9 +100,9 @@ namespace RecipeApp.Service.Validators
                     .When(x => !string.IsNullOrWhiteSpace(x.Instructions));
 
                 // Image validation - optional but if provided must be valid
-                RuleFor(x => x.ArrImage)
+                RuleFor(x => x.ImageUrl)
                     .MaximumLength(500).WithMessage("נתיב התמונה ארוך מדי")
-                    .When(x => !string.IsNullOrWhiteSpace(x.ArrImage));
+                    .When(x => !string.IsNullOrWhiteSpace(x.ImageUrl));
 
                 // Servings validation - optional but if provided must be valid
                 RuleFor(x => x.Servings)
