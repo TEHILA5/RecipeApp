@@ -12,22 +12,26 @@ namespace RecipeApp.Service.Validators
         {
             // IngredientId validation
             RuleFor(x => x.IngredientId)
-                .GreaterThan(0).WithMessage("מזהה מצרך חייב להיות גדול מ-0");
+                .Cascade(CascadeMode.Stop)
+                .GreaterThan(0).WithMessage("Ingredient ID must be greater than 0");
 
             // Quantity validation
             RuleFor(x => x.Quantity)
-                .GreaterThan(0).WithMessage("כמות חייבת להיות גדולה מ-0")
-                .LessThanOrEqualTo(10000).WithMessage("כמות לא יכולה להיות יותר מ-10000");
+                .Cascade(CascadeMode.Stop)
+                .GreaterThan(0).WithMessage("Quantity must be greater than 0")
+                .LessThanOrEqualTo(10000).WithMessage("Quantity cannot exceed 10000");
 
             // Unit validation
             RuleFor(x => x.Unit)
-                .NotEmpty().WithMessage("יחידת מידה היא שדה חובה")
-                .MaximumLength(50).WithMessage("יחידת מידה יכולה להכיל עד 50 תווים");
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Unit is required")
+                .MaximumLength(50).WithMessage("Unit can be up to 50 characters");
 
             // Importance validation (if exists in your DTO)
             RuleFor(x => x.Importance)
-                .IsInEnum().WithMessage("רמת חשיבות לא חוקית")
-                .When(x => x.Importance != 0); // אם יש שדה Importance
+                .Cascade(CascadeMode.Stop)
+                .IsInEnum().WithMessage("Invalid importance level")
+                .When(x => x.Importance != 0); // if Importance exists
         }
     }
 }

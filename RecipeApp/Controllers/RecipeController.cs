@@ -21,6 +21,7 @@ namespace RecipeApp.Controllers
 
         // GET: api/Recipe
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<List<RecipeDto>>> GetAll()
         {
             try
@@ -100,7 +101,8 @@ namespace RecipeApp.Controllers
                     {
                         IngredientId = i.IngredientId,
                         Quantity = i.Quantity,
-                        Unit = i.Unit
+                        Unit = i.Unit,
+                        Importance = i.Importance,
                     }).ToList()
                 };
 

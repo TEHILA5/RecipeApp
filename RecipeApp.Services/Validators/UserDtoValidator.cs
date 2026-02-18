@@ -12,33 +12,36 @@ namespace RecipeApp.Service.Validators
         public UserDtoValidator()
         {
             // Name validation
-            RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("שם הוא שדה חובה")
-                .MinimumLength(2).WithMessage("שם חייב להכיל לפחות 2 תווים")
-                .MaximumLength(100).WithMessage("שם יכול להכיל עד 100 תווים")
-                .Matches(@"^[\u0590-\u05FFa-zA-Z\s]+$").WithMessage("שם יכול להכיל רק אותיות ורווחים");
+            RuleFor(x => x.Name).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Name is required")
+                .MinimumLength(2).WithMessage("Name must be at least 2 characters long")
+                .MaximumLength(100).WithMessage("Name can contain up to 100 characters")
+                .Matches(@"^[a-zA-Z\s]+$")
+                .WithMessage("Name can contain English letters and spaces only");
 
             // Phone validation - Israeli format
-            RuleFor(x => x.Phone)
-                .NotEmpty().WithMessage("מספר טלפון הוא שדה חובה")
-                .Must(BeValidIsraeliPhone).WithMessage("מספר טלפון לא תקין. פורמט נכון: 05X-XXXXXXX או 0XX-XXXXXXX");
+            RuleFor(x => x.Phone).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Phone number is required")
+                .Must(BeValidIsraeliPhone)
+                .WithMessage("Invalid phone number. Valid formats: 05X-XXXXXXX or 0XX-XXXXXXX");
 
             // Email validation
-            RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("אימייל הוא שדה חובה")
-                .EmailAddress().WithMessage("כתובת אימייל לא תקינה")
-                .MaximumLength(100).WithMessage("אימייל יכול להכיל עד 100 תווים");
+            RuleFor(x => x.Email).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Email is required")
+                .EmailAddress().WithMessage("Invalid email address")
+                .MaximumLength(100).WithMessage("Email can contain up to 100 characters");
 
             // Password validation - MUST be provided for registration
-            RuleFor(x => x.Password)
-                .NotNull().WithMessage("סיסמה היא שדה חובה")
-                .NotEmpty().WithMessage("סיסמה היא שדה חובה")
-                .MinimumLength(8).WithMessage("סיסמה חייבת להכיל לפחות 8 תווים")
-                .MaximumLength(100).WithMessage("סיסמה יכולה להכיל עד 100 תווים")
-                .Matches("[A-Z]").WithMessage("סיסמה חייבת להכיל לפחות אות גדולה אחת באנגלית")
-                .Matches("[a-z]").WithMessage("סיסמה חייבת להכיל לפחות אות קטנה אחת באנגלית")
-                .Matches("[0-9]").WithMessage("סיסמה חייבת להכיל לפחות ספרה אחת")
-                .Matches(@"[!@#$%^&*(),.?""':{}|<>]").WithMessage("סיסמה חייבת להכיל לפחות תו מיוחד אחד");
+            RuleFor(x => x.Password).Cascade(CascadeMode.Stop)
+                .NotNull().WithMessage("Password is required")
+                .NotEmpty().WithMessage("Password is required")
+                .MinimumLength(8).WithMessage("Password must be at least 8 characters long")
+                .MaximumLength(100).WithMessage("Password can contain up to 100 characters")
+                .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase English letter")
+                .Matches("[a-z]").WithMessage("Password must contain at least one lowercase English letter")
+                .Matches("[0-9]").WithMessage("Password must contain at least one digit")
+                .Matches(@"[!@#$%^&*(),.?""':{}|<>]")
+                .WithMessage("Password must contain at least one special character");
         }
 
         /// <summary>
@@ -86,12 +89,12 @@ namespace RecipeApp.Service.Validators
     {
         public LoginDtoValidator()
         {
-            RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("אימייל הוא שדה חובה")
-                .EmailAddress().WithMessage("כתובת אימייל לא תקינה");
+            RuleFor(x => x.Email).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Email is required")
+                .EmailAddress().WithMessage("Invalid email address");
 
-            RuleFor(x => x.Password)
-                .NotEmpty().WithMessage("סיסמה היא שדה חובה");
+            RuleFor(x => x.Password).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Password is required");
         }
     }
 
@@ -103,32 +106,36 @@ namespace RecipeApp.Service.Validators
         public UserUpdateDtoValidator()
         {
             // Name validation
-            RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("שם הוא שדה חובה")
-                .MinimumLength(2).WithMessage("שם חייב להכיל לפחות 2 תווים")
-                .MaximumLength(100).WithMessage("שם יכול להכיל עד 100 תווים");
+            RuleFor(x => x.Name).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Name is required")
+                .MinimumLength(2).WithMessage("Name must be at least 2 characters long")
+                .MaximumLength(100).WithMessage("Name can contain up to 100 characters")
+                .Matches(@"^[a-zA-Z\s]+$")
+                .WithMessage("Name can contain English letters and spaces only");
 
             // Phone validation
-            RuleFor(x => x.Phone)
-                .NotEmpty().WithMessage("מספר טלפון הוא שדה חובה")
-                .Must(BeValidIsraeliPhone).WithMessage("מספר טלפון לא תקין");
+            RuleFor(x => x.Phone).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Phone number is required")
+                .Must(BeValidIsraeliPhone)
+                .WithMessage("Invalid phone number");
 
             // Email validation
-            RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("אימייל הוא שדה חובה")
-                .EmailAddress().WithMessage("כתובת אימייל לא תקינה")
-                .MaximumLength(100).WithMessage("אימייל יכול להכיל עד 100 תווים");
+            RuleFor(x => x.Email).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Email is required")
+                .EmailAddress().WithMessage("Invalid email address")
+                .MaximumLength(100).WithMessage("Email can contain up to 100 characters");
 
             // Password is OPTIONAL for update - only validate if provided
             When(x => !string.IsNullOrEmpty(x.Password), () =>
             {
-                RuleFor(x => x.Password)
-                    .MinimumLength(8).WithMessage("סיסמה חייבת להכיל לפחות 8 תווים")
-                    .MaximumLength(100).WithMessage("סיסמה יכולה להכיל עד 100 תווים")
-                    .Matches("[A-Z]").WithMessage("סיסמה חייבת להכיל לפחות אות גדולה אחת")
-                    .Matches("[a-z]").WithMessage("סיסמה חייבת להכיל לפחות אות קטנה אחת")
-                    .Matches("[0-9]").WithMessage("סיסמה חייבת להכיל לפחות ספרה אחת")
-                    .Matches(@"[!@#$%^&*(),.?""':{}|<>]").WithMessage("סיסמה חייבת להכיל תו מיוחד");
+                RuleFor(x => x.Password).Cascade(CascadeMode.Stop)
+                    .MinimumLength(8).WithMessage("Password must be at least 8 characters long")
+                    .MaximumLength(100).WithMessage("Password can contain up to 100 characters")
+                    .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase English letter")
+                    .Matches("[a-z]").WithMessage("Password must contain at least one lowercase English letter")
+                    .Matches("[0-9]").WithMessage("Password must contain at least one digit")
+                    .Matches(@"[!@#$%^&*(),.?""':{}|<>]")
+                    .WithMessage("Password must contain at least one special character");
             });
         }
 

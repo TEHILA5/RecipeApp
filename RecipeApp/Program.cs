@@ -1,11 +1,9 @@
 using System.Text;
 using FluentValidation.AspNetCore;
-using FluentValidation; 
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens; 
-using Microsoft.OpenApi;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RecipeApp.DataContext;
 using RecipeApp.Repository.Interfaces;
@@ -21,6 +19,21 @@ namespace RecipeApp
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+             
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowReactApp", policy =>
+                {
+                    policy
+                        .WithOrigins(
+                            "http://localhost:5173",   // Vite default
+                            "http://localhost:3000"    // CRA fallback
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
 
             builder.Services.AddValidations();
             builder.Services.AddFluentValidationAutoValidation();
@@ -37,7 +50,7 @@ namespace RecipeApp
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below. Example: 'Bearer 12345abcdef'",
+                    Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.ApiKey,
@@ -46,25 +59,24 @@ namespace RecipeApp
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
-                   {
-                       new OpenApiSecurityScheme
-                       {
-                          Reference = new OpenApiReference
-                          {
-                             Type = ReferenceType.SecurityScheme,
-                             Id = "Bearer"
-                          },
-                          Scheme = "oauth2",
-                          Name = "Bearer",
-                          In = ParameterLocation.Header
-                       },
-                       new List<string>()
-                   }
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            },
+                            Scheme = "oauth2",
+                            Name = "Bearer",
+                            In = ParameterLocation.Header
+                        },
+                        new List<string>()
+                    }
                 });
             });
 
-
-            //  JWT Authentication 
+            // JWT Authentication
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(option =>
                     option.TokenValidationParameters = new TokenValidationParameters
@@ -79,23 +91,23 @@ namespace RecipeApp
                             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
                     });
 
-            //   AutoMapper
+            // AutoMapper
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-            //  DbContext 
+            // DbContext
             builder.Services.AddDbContext<RecipeDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<IContext>(provider =>
                 provider.GetRequiredService<RecipeDbContext>());
 
-            //  Repositories & Services 
+            // Repositories & Services
             builder.Services.AddRepositories();
             builder.Services.AddServices();
 
             var app = builder.Build();
 
-            //  Middleware Pipeline
+            // Middleware Pipeline
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -103,6 +115,9 @@ namespace RecipeApp
             }
 
             app.UseHttpsRedirection();
+             
+            app.UseCors("AllowReactApp");
+
             app.UseAuthentication();
             app.UseAuthorization();
 

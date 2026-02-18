@@ -12,21 +12,22 @@ namespace RecipeApp.Service.Validators
         {
             // IngredientId1 validation
             RuleFor(x => x.IngredientId1)
-                .GreaterThan(0).WithMessage("מזהה מרכיב ראשון חייב להיות גדול מ-0");
+                .GreaterThan(0).WithMessage("First ingredient ID must be greater than 0");
 
             // IngredientId2 validation
             RuleFor(x => x.IngredientId2)
-                .GreaterThan(0).WithMessage("מזהה מרכיב שני חייב להיות גדול מ-0");
+                .GreaterThan(0).WithMessage("Second ingredient ID must be greater than 0");
 
             // Validate that two ingredients are different
             RuleFor(x => x.IngredientId2)
                 .NotEqual(x => x.IngredientId1)
-                .WithMessage("לא ניתן להמיר מרכיב לעצמו");
+                .WithMessage("Cannot convert an ingredient to itself");
 
             // ConversionRatio validation
             RuleFor(x => x.ConversionRatio)
-                .GreaterThan(0).WithMessage("יחס המרה חייב להיות גדול מ-0")
-                .LessThanOrEqualTo(1000).WithMessage("יחס המרה לא יכול להיות יותר מ-1000");
+                .Cascade(CascadeMode.Stop)
+                .GreaterThan(0).WithMessage("Conversion ratio must be greater than 0")
+                .LessThanOrEqualTo(1000).WithMessage("Conversion ratio cannot be greater than 1000");
 
             // IsBidirectional is a boolean, no validation needed
         }
@@ -40,9 +41,12 @@ namespace RecipeApp.Service.Validators
         {
             // ConversionRatio validation - רק אם סופק ערך
             RuleFor(x => x.ConversionRatio)
-                .GreaterThan(0).WithMessage("יחס המרה חייב להיות גדול מ-0")
-                .LessThanOrEqualTo(1000).WithMessage("יחס המרה לא יכול להיות יותר מ-1000")
-                .When(x => x.ConversionRatio.HasValue);
+            .Cascade(CascadeMode.Stop)
+            .GreaterThan(0)
+            .WithMessage("Conversion ratio must be greater than 0")
+            .LessThanOrEqualTo(1000)
+            .WithMessage("Conversion ratio cannot be greater than 1000")
+            .When(x => x.ConversionRatio.HasValue);
 
             // IsBidirectional is nullable boolean, no special validation needed
         }

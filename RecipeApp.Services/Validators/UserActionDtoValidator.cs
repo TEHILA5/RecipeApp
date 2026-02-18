@@ -12,43 +12,43 @@ namespace RecipeApp.Service.Validators
         {
             // ActionType validation
             RuleFor(x => x.ActionType)
-                .IsInEnum().WithMessage("סוג פעולה לא חוקי");
+                .IsInEnum().WithMessage("Invalid action type");
 
             // RecipeId validation - optional field
             RuleFor(x => x.RecipeId)
-                .GreaterThan(0).WithMessage("מזהה מתכון חייב להיות גדול מ-0")
+                .GreaterThan(0).WithMessage("Recipe ID must be greater than 0")
                 .When(x => x.RecipeId.HasValue);
 
             // RecipeName validation - optional field
             RuleFor(x => x.RecipeName)
-                .MaximumLength(200).WithMessage("שם מתכון יכול להכיל עד 200 תווים")
+                .MaximumLength(200).WithMessage("Recipe name can contain up to 200 characters")
                 .When(x => !string.IsNullOrWhiteSpace(x.RecipeName));
 
             // RecipeImageUrl validation - optional field
             RuleFor(x => x.RecipeImageUrl)
-                .MaximumLength(500).WithMessage("כתובת תמונה יכולה להכיל עד 500 תווים")
+                .MaximumLength(500).WithMessage("Image URL can contain up to 500 characters")
                 .When(x => !string.IsNullOrWhiteSpace(x.RecipeImageUrl));
 
             // Category validation - optional field
             RuleFor(x => x.Category)
-                .IsInEnum().WithMessage("קטגוריה לא חוקית")
+                .IsInEnum().WithMessage("Invalid category")
                 .When(x => x.Category.HasValue);
 
             // UserName validation - optional field
-            RuleFor(x => x.UserName)
-                .MinimumLength(2).WithMessage("שם משתמש חייב להכיל לפחות 2 תווים")
-                .MaximumLength(100).WithMessage("שם משתמש יכול להכיל עד 100 תווים")
+            RuleFor(x => x.UserName).Cascade(CascadeMode.Stop)
+                .MinimumLength(2).WithMessage("User name must be at least 2 characters long")
+                .MaximumLength(100).WithMessage("User name can contain up to 100 characters")
                 .When(x => !string.IsNullOrWhiteSpace(x.UserName));
 
             // Content validation for comments - optional field
-            RuleFor(x => x.Content)
-                .MinimumLength(2).WithMessage("תוכן חייב להכיל לפחות 2 תווים")
-                .MaximumLength(2000).WithMessage("תוכן יכול להכיל עד 2000 תווים")
+            RuleFor(x => x.Content).Cascade(CascadeMode.Stop)
+                .MinimumLength(2).WithMessage("Content must be at least 2 characters long")
+                .MaximumLength(2000).WithMessage("Content can contain up to 2000 characters")
                 .When(x => !string.IsNullOrWhiteSpace(x.Content));
 
             // Rating validation - optional field
             RuleFor(x => x.Rating)
-                .InclusiveBetween(1, 5).WithMessage("דירוג חייב להיות בין 1 ל-5")
+                .InclusiveBetween(1, 5).WithMessage("Rating must be between 1 and 5")
                 .When(x => x.Rating.HasValue);
         }
     }
@@ -60,9 +60,9 @@ namespace RecipeApp.Service.Validators
     {
         public BookCreateDtoValidator()
         {
-            RuleFor(x => x.RecipeId)
-                .NotEmpty().WithMessage("מזהה מתכון הוא שדה חובה")
-                .GreaterThan(0).WithMessage("מזהה מתכון חייב להיות גדול מ-0");
+            RuleFor(x => x.RecipeId).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Recipe ID is required")
+                .GreaterThan(0).WithMessage("Recipe ID must be greater than 0");
         }
     }
 
@@ -74,21 +74,22 @@ namespace RecipeApp.Service.Validators
         public CommentCreateDtoValidator()
         {
             // RecipeId is required
-            RuleFor(x => x.RecipeId)
-                .NotEmpty().WithMessage("מזהה מתכון הוא שדה חובה")
-                .GreaterThan(0).WithMessage("מזהה מתכון חייב להיות גדול מ-0");
+            RuleFor(x => x.RecipeId).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Recipe ID is required")
+                .GreaterThan(0).WithMessage("Recipe ID must be greater than 0");
 
             // Content is required
-            RuleFor(x => x.Content)
-                .NotEmpty().WithMessage("תוכן התגובה הוא שדה חובה")
-                .MinimumLength(2).WithMessage("תגובה חייבת להכיל לפחות 2 תווים")
-                .MaximumLength(2000).WithMessage("תגובה יכולה להכיל עד 2000 תווים")
-                .Must(NotContainOnlyWhitespace).WithMessage("תגובה לא יכולה להכיל רק רווחים");
+            RuleFor(x => x.Content).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Comment content is required")
+                .MinimumLength(2).WithMessage("Comment must be at least 2 characters long")
+                .MaximumLength(2000).WithMessage("Comment can contain up to 2000 characters")
+                .Must(NotContainOnlyWhitespace)
+                .WithMessage("Comment cannot contain only whitespace");
 
             // Rating is required
-            RuleFor(x => x.Rating)
-                .NotEmpty().WithMessage("דירוג הוא שדה חובה")
-                .InclusiveBetween(1, 5).WithMessage("דירוג חייב להיות בין 1 ל-5 כוכבים");
+            RuleFor(x => x.Rating).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Rating is required")
+                .InclusiveBetween(1, 5).WithMessage("Rating must be between 1 and 5 stars");
         }
 
         private bool NotContainOnlyWhitespace(string content)
@@ -104,9 +105,9 @@ namespace RecipeApp.Service.Validators
     {
         public HistoryCreateDtoValidator()
         {
-            RuleFor(x => x.Category)
-                .NotEmpty().WithMessage("קטגוריה היא שדה חובה")
-                .IsInEnum().WithMessage("קטגוריה לא חוקית");
+            RuleFor(x => x.Category).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Category is required")
+                .IsInEnum().WithMessage("Invalid category");
         }
     }
 
@@ -119,12 +120,12 @@ namespace RecipeApp.Service.Validators
         {
             // FavoriteCategory validation
             RuleFor(x => x.FavoriteCategory)
-                .IsInEnum().WithMessage("קטגוריה מועדפת לא חוקית");
+                .IsInEnum().WithMessage("Invalid favorite category");
 
             // CategoryStats validation
-            RuleFor(x => x.CategoryStats)
-                .NotNull().WithMessage("סטטיסטיקות קטגוריות לא יכולות להיות null")
-                .Must(x => x.Count <= 20).WithMessage("לא ניתן לשמור יותר מ-20 קטגוריות")
+            RuleFor(x => x.CategoryStats).Cascade(CascadeMode.Stop)
+                .NotNull().WithMessage("Category statistics cannot be null")
+                .Must(x => x.Count <= 20).WithMessage("Cannot store more than 20 categories")
                 .When(x => x.CategoryStats != null);
 
             // Validate each CategoryStats item
@@ -142,11 +143,11 @@ namespace RecipeApp.Service.Validators
         public CategoryStatsDtoValidator()
         {
             RuleFor(x => x.Category)
-                .IsInEnum().WithMessage("קטגוריה לא חוקית");
+                .IsInEnum().WithMessage("Invalid category");
 
-            RuleFor(x => x.SearchCount)
-                .GreaterThanOrEqualTo(0).WithMessage("מספר חיפושים חייב להיות 0 או יותר")
-                .LessThanOrEqualTo(10000).WithMessage("מספר חיפושים לא יכול להיות יותר מ-10000");
+            RuleFor(x => x.SearchCount).Cascade(CascadeMode.Stop)
+                .GreaterThanOrEqualTo(0).WithMessage("Search count must be 0 or greater")
+                .LessThanOrEqualTo(10000).WithMessage("Search count cannot exceed 10000");
         }
     }
 }

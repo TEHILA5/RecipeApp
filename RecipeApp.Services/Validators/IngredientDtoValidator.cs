@@ -12,11 +12,12 @@ namespace RecipeApp.Service.Validators
         {
             // Name validation
             RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("שם המרכיב הוא שדה חובה")
-                .MinimumLength(2).WithMessage("שם המרכיב חייב להכיל לפחות 2 תווים")
-                .MaximumLength(100).WithMessage("שם המרכיב יכול להכיל עד 100 תווים")
-                .Matches(@"^[\u0590-\u05FFa-zA-Z\s\-'""]+$")
-                .WithMessage("שם המרכיב יכול להכיל רק אותיות, רווחים, מקפים ומרכאות");
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Ingredient name is required")
+                .MinimumLength(2).WithMessage("Ingredient name must be at least 2 characters long")
+                .MaximumLength(100).WithMessage("Ingredient name can contain up to 100 characters")
+                .Matches(@"^[a-zA-Z\s\-]+$")
+                .WithMessage("Ingredient name can contain English letters, spaces, and hyphens only");
         }
     }
     public class IngredientUpdateDtoValidator : AbstractValidator<IngredientUpdateDto>
@@ -25,11 +26,12 @@ namespace RecipeApp.Service.Validators
         {
             // Name validation
             RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("שם המרכיב הוא שדה חובה")
-                .MinimumLength(2).WithMessage("שם המרכיב חייב להכיל לפחות 2 תווים")
-                .MaximumLength(100).WithMessage("שם המרכיב יכול להכיל עד 100 תווים")
-                .Matches(@"^[\u0590-\u05FFa-zA-Z\s\-'""]+$")
-                .WithMessage("שם המרכיב יכול להכיל רק אותיות, רווחים, מקפים ומרכאות");
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Ingredient name is required")
+                .MinimumLength(2).WithMessage("Ingredient name must be at least 2 characters long")
+                .MaximumLength(100).WithMessage("Ingredient name can contain up to 100 characters")
+                .Matches(@"^[a-zA-Z\s\-'""]+$")
+                .WithMessage("Ingredient name can contain English letters, spaces, hyphens, and quotes only");
         }
     }
 }
