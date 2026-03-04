@@ -37,6 +37,7 @@ namespace RecipeApp.Controllers
 
         // GET: api/Recipe/:id
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<RecipeDto>> GetById(int id)
         {
             try
@@ -141,6 +142,7 @@ namespace RecipeApp.Controllers
 
         // GET: api/Recipe/category/Cakes
         [HttpGet("category/{category}")]
+        [AllowAnonymous]
         public async Task<ActionResult<List<RecipeDto>>> SearchByCategory(string category)
         {
             try

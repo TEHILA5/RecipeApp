@@ -226,7 +226,7 @@ namespace RecipeApp.Services.Services
         }
 
         /// <summary>
-        /// מוצא את הקטגוריות הכי נפוצות של המשתמש
+        /// מוצא את הקטגוריות הכי נפוצות של המשתמש - תמיד מחזיר לפחות 3 מתכונים
         /// </summary>
         public async Task<List<RecipeDto>> GetRecommendedForUser(int userId)
         {
@@ -234,8 +234,20 @@ namespace RecipeApp.Services.Services
             var myActions = allActions.Where(ua => ua.UserId == userId).ToList();
             var recipes = await _recipeRepository.GetAll();
 
+            const int MIN_RESULTS = 3;
+
+            // אין היסטוריה - מחזירים הכי מדורגים
             if (myActions.Count == 0)
-                return recipes.Select(r => MapRecipeWithStats(r, allActions)).ToList();
+            {
+                return recipes
+                    .OrderByDescending(r => allActions
+                        .Where(ua => ua.RecipeId == r.Id && ua.ActionType == UserActionType.Comment && ua.Rating.HasValue)
+                        .Select(ua => (double)ua.Rating!.Value)
+                        .DefaultIfEmpty(0).Average())
+                    .Take(MIN_RESULTS)
+                    .Select(r => MapRecipeWithStats(r, allActions))
+                    .ToList();
+            }
 
             var recipeDictionary = recipes.ToDictionary(r => r.Id);
 
@@ -244,12 +256,12 @@ namespace RecipeApp.Services.Services
                 .Select(ua => ua.RecipeId!.Value)
                 .ToHashSet();
 
-            // מוצא קטגוריה הכי נפוצה
+            // קטגוריה הכי נפוצה
             var mostCommonCategory = myActions
                 .Where(ua =>
-                ua.ActionType == UserActionType.History &&
-                ua.RecipeId.HasValue && 
-                recipeDictionary.ContainsKey(ua.RecipeId!.Value))
+                    ua.ActionType == UserActionType.History &&
+                    ua.RecipeId.HasValue &&
+                    recipeDictionary.ContainsKey(ua.RecipeId!.Value))
                 .Select(ua => recipeDictionary[ua.RecipeId!.Value].Category)
                 .GroupBy(c => c)
                 .OrderByDescending(g => g.Count())
@@ -257,23 +269,50 @@ namespace RecipeApp.Services.Services
                 .Cast<RecipeCategory?>()
                 .FirstOrDefault();
 
-            List<Recipe> recommended;
+            var recommended = new List<Recipe>();
 
+            // 1. מתכונים לא נראים מהקטגוריה האהובה
             if (mostCommonCategory.HasValue)
             {
                 recommended = recipes
-                    .Where(r => r.Category == mostCommonCategory.Value
-                        && !seenRecipeIds.Contains(r.Id))
-                    .ToList();
-            }
-            else
-            {
-                recommended = recipes
-                    .Where(r => !seenRecipeIds.Contains(r.Id))
+                    .Where(r => r.Category == mostCommonCategory.Value && !seenRecipeIds.Contains(r.Id))
                     .ToList();
             }
 
-            return recommended.Select(r => MapRecipeWithStats(r, allActions)).ToList();
+            // 2. אם אין מספיק - הוסף לא נראים מכל קטגוריה
+            if (recommended.Count < MIN_RESULTS)
+            {
+                var moreRecipes = recipes
+                    .Where(r => !seenRecipeIds.Contains(r.Id) && !recommended.Any(rec => rec.Id == r.Id))
+                    .OrderByDescending(r => allActions
+                        .Where(ua => ua.RecipeId == r.Id && ua.ActionType == UserActionType.Comment && ua.Rating.HasValue)
+                        .Select(ua => (double)ua.Rating!.Value)
+                        .DefaultIfEmpty(0).Average())
+                    .Take(MIN_RESULTS - recommended.Count)
+                    .ToList();
+
+                recommended.AddRange(moreRecipes);
+            }
+
+            // 3. אם עדיין אין מספיק (ראה הכל) - הוסף הכי מדורגים כלשהם
+            if (recommended.Count < MIN_RESULTS)
+            {
+                var topRated = recipes
+                    .Where(r => !recommended.Any(rec => rec.Id == r.Id))
+                    .OrderByDescending(r => allActions
+                        .Where(ua => ua.RecipeId == r.Id && ua.ActionType == UserActionType.Comment && ua.Rating.HasValue)
+                        .Select(ua => (double)ua.Rating!.Value)
+                        .DefaultIfEmpty(0).Average())
+                    .Take(MIN_RESULTS - recommended.Count)
+                    .ToList();
+
+                recommended.AddRange(topRated);
+            }
+
+            return recommended
+                .Take(MIN_RESULTS)
+                .Select(r => MapRecipeWithStats(r, allActions))
+                .ToList();
         }
 
         //  Helpers  

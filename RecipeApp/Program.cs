@@ -104,7 +104,7 @@ namespace RecipeApp
             // Repositories & Services
             builder.Services.AddRepositories();
             builder.Services.AddServices();
-
+            builder.Services.AddHttpClient();
             var app = builder.Build();
 
             // Middleware Pipeline
