@@ -239,5 +239,16 @@ namespace RecipeApp.Services.Services
                 return dto;
             }).ToList();
         }
+
+        public async Task<List<UserActionDto>> GetRecipeComments(int recipeId)
+        {
+            var actions = await _userActionRepository.GetAll();
+            var comments = actions
+                .Where(ua => ua.ActionType == UserActionType.Comment && ua.RecipeId == recipeId)
+                .OrderByDescending(ua => ua.CreatedAt)
+                .ToList();
+
+            return await EnrichActions(comments);
+        }
     }
 }

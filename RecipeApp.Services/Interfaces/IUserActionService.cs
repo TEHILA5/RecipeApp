@@ -17,5 +17,6 @@ namespace RecipeApp.Services.Interfaces
         Task<UserActionDto> CreateComment(int userId, CommentCreateDto createDto);
         Task<UserActionDto> CreateBook(int userId, BookCreateDto createDto);
         Task<UserActionDto> CreateHistory(int userId, HistoryCreateDto createDto);
+        Task<List<UserActionDto>> GetRecipeComments(int recipeId);
     }
 }

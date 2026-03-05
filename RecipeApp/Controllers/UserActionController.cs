@@ -320,5 +320,21 @@ namespace RecipeApp.Controllers
             var roleClaim = identity?.FindFirst(ClaimTypes.Role);
             return roleClaim?.Value == "Admin";
         }
+
+        // GET: api/UserAction/recipe/{recipeId}/comments - כולם יכולים לראות
+        [HttpGet("recipe/{recipeId}/comments")]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<UserActionDto>>> GetRecipeComments(int recipeId)
+        {
+            try
+            {
+                var comments = await _userActionService.GetRecipeComments(recipeId);
+                return Ok(comments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
     }
 }
