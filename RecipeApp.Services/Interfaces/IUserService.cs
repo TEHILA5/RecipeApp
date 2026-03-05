@@ -16,5 +16,6 @@ namespace RecipeApp.Services.Interfaces
         Task<UserAdminDto> Register(UserCreateDto createDto);
         Task<UserAdminDto> Login(UserLoginDto loginDto);
         Task<bool> EmailExists(string email);
+        Task ResetPassword(ResetPasswordDto resetDto);
     }
 }

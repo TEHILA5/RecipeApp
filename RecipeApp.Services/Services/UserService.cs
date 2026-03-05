@@ -135,5 +135,19 @@ namespace RecipeApp.Services.Services
                 iterationCount: 100_000,
                 numBytesRequested: 32);
         }
+
+        public async Task ResetPassword(ResetPasswordDto resetDto)
+        {
+            var users = await _userRepository.GetAll();
+            var user = users.FirstOrDefault(u =>
+                string.Equals(u.Email, resetDto.Email, StringComparison.OrdinalIgnoreCase))
+                ?? throw new KeyNotFoundException("No account found with this email address.");
+
+            if (string.IsNullOrWhiteSpace(resetDto.NewPassword) || resetDto.NewPassword.Length < 6)
+                throw new ArgumentException("Password must be at least 6 characters.");
+
+            user.PasswordHash = HashPassword(resetDto.NewPassword);
+            await _userRepository.UpdateItem(user.Id, user);
+        }
     }
 }

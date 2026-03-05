@@ -339,6 +339,27 @@ namespace RecipeApp.Controllers
             var adminEmail = _configuration["AdminEmail"] ?? "admin@recipeapp.com";
             return string.Equals(email, adminEmail, StringComparison.OrdinalIgnoreCase);
         }
+        // POST: api/User/reset-password - כולם יכולים
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
+            {
+                await _userService.ResetPassword(resetDto);
+                return Ok(new { message = "Password updated successfully." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
     }
 }
 
