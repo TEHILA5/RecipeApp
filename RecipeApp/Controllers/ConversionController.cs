@@ -20,6 +20,7 @@ namespace RecipeApp.Controllers
 
         // GET: api/Conversion
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<List<ConversionDto>>> GetAll()
         {
             try
