@@ -8,9 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <PackageReference Include="Catalyst" Version="1.0.65141" />
+    <PackageReference Include="Catalyst.Models.English" Version="1.0.30952" />
+    <PackageReference Include="F23.StringSimilarity" Version="7.0.1" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="FuzzySharp" Version="2.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="10.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11">

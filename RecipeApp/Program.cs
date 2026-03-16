@@ -1,6 +1,6 @@
 using System.Text;
-using FluentValidation.AspNetCore;
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using RecipeApp.DataContext;
 using RecipeApp.Repository.Interfaces;
 using RecipeApp.Repository.Repositories;
+using RecipeApp.Services.Interfaces;
 using RecipeApp.Services.Mapping;
 using RecipeApp.Services.Services;
 using RecipeApp.Services.Validators;
@@ -104,6 +105,7 @@ namespace RecipeApp
             // Repositories & Services
             builder.Services.AddRepositories();
             builder.Services.AddServices();
+            builder.Services.AddScoped<ITextAnalysisService, TextAnalysisService>();
             builder.Services.AddHttpClient();
             var app = builder.Build();
 

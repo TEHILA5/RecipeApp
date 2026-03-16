@@ -34,10 +34,10 @@ namespace RecipeApp.Repository.Entities
         public int Level { get; set; }
 
         public int PrepTime { get; set; }
-
         public int TotalTime { get; set; }
-
-        // Navigation Properties
+         
+        public string? Tags { get; set; } // JSON string: ["tag1","tag2"]
+         
         public ICollection<RecipeIngredient> RecipeIngredients { get; set; }
         public ICollection<UserAction> UserActions { get; set; }
     }

@@ -1,6 +1,5 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
@@ -9,7 +8,7 @@ namespace RecipeApp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // צריך לכולם Token
+    [Authorize]
     public class RecipeController : ControllerBase
     {
         private readonly IRecipeService _recipeService;
@@ -24,15 +23,8 @@ namespace RecipeApp.Controllers
         [AllowAnonymous]
         public async Task<ActionResult<List<RecipeDto>>> GetAll()
         {
-            try
-            {
-                var recipes = await _recipeService.GetAll();
-                return Ok(recipes);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            try { return Ok(await _recipeService.GetAll()); }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
 
         // GET: api/Recipe/:id
@@ -40,50 +32,31 @@ namespace RecipeApp.Controllers
         [AllowAnonymous]
         public async Task<ActionResult<RecipeDto>> GetById(int id)
         {
-            try
-            {
-                var recipe = await _recipeService.GetById(id);
-                return Ok(recipe);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            try { return Ok(await _recipeService.GetById(id)); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
 
-        // POST: api/Recipe - רק מנהל יכול ליצור מתכונים
+        // POST: api/Recipe
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<RecipeDto>> Create([FromBody] RecipeCreateDto createDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
                 var created = await _recipeService.CreateRecipe(createDto);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
 
-        // PATCH: api/Recipe/:id - רק מנהל יכול לערוך
+        // PATCH: api/Recipe/:id
         [HttpPatch("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<RecipeDto>> Update(int id, [FromBody] RecipeUpdateDto updateDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
                 var recipeDto = new RecipeDto
@@ -98,6 +71,7 @@ namespace RecipeApp.Controllers
                     Level = updateDto.Level,
                     PrepTime = updateDto.PrepTime,
                     TotalTime = updateDto.TotalTime,
+                    Tags = updateDto.Tags, // ✅
                     Ingredients = updateDto.Ingredients?.Select(i => new RecipeIngredientDto
                     {
                         IngredientId = i.IngredientId,
@@ -106,38 +80,20 @@ namespace RecipeApp.Controllers
                         Importance = i.Importance,
                     }).ToList()
                 };
-
-                var updated = await _recipeService.UpdateItem(id, recipeDto);
-                return Ok(updated);
+                return Ok(await _recipeService.UpdateItem(id, recipeDto));
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
 
-        // DELETE: api/Recipe/:id - רק מנהל יכול למחוק
+        // DELETE: api/Recipe/:id
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                await _recipeService.DeleteItem(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            try { await _recipeService.DeleteItem(id); return NoContent(); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
 
         // GET: api/Recipe/category/Cakes
@@ -145,54 +101,40 @@ namespace RecipeApp.Controllers
         [AllowAnonymous]
         public async Task<ActionResult<List<RecipeDto>>> SearchByCategory(string category)
         {
-            try
-            {
-                var recipes = await _recipeService.SearchByCategory(category);
-                return Ok(recipes);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            try { return Ok(await _recipeService.SearchByCategory(category)); }
+            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
 
         // POST: api/Recipe/search-by-ingredients
         [HttpPost("search-by-ingredients")]
         public async Task<ActionResult<List<RecipeDto>>> SearchByIngredients([FromBody] List<string> ingredients)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            try
-            {
-                var recipes = await _recipeService.SearchByIngredients(ingredients);
-                return Ok(recipes);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try { return Ok(await _recipeService.SearchByIngredients(ingredients)); }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
 
-        // GET: api/Recipe/recommended - המלצות למשתמש המחובר
+        // ✅ POST: api/Recipe/search-by-tags 
+        [HttpPost("search-by-tags")]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<RecipeDto>>> SearchByTags([FromBody] List<string> tags)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try { return Ok(await _recipeService.SearchByTags(tags)); }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
+        }
+
+        // GET: api/Recipe/recommended
         [HttpGet("recommended")]
         public async Task<ActionResult<List<RecipeDto>>> GetRecommended()
         {
             try
             {
                 var userId = GetCurrentUserId();
-                var recipes = await _recipeService.GetRecommendedForUser(userId);
-                return Ok(recipes);
+                return Ok(await _recipeService.GetRecommendedForUser(userId));
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
 
         private int GetCurrentUserId()

@@ -8,11 +8,12 @@ using RecipeApp.Common.DTOs;
 namespace RecipeApp.Services.Interfaces
 {
     public interface IRecipeService : IService<RecipeDto>
-    { 
+    {
         Task<List<RecipeDto>> SearchByCategory(string category);
         Task<List<RecipeDto>> SearchByIngredients(List<string> ingredients);
         Task<List<RecipeDto>> GetRecommendedForUser(int userId);
         Task<RecipeDto> CreateRecipe(RecipeCreateDto createDto);
         Task<RecipeDto> UpdateRecipe(int id, RecipeCreateDto updateDto);
+        Task<List<RecipeDto>> SearchByTags(List<string> tags);
     }
 }
