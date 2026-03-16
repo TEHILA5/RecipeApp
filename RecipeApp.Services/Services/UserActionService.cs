@@ -201,6 +201,48 @@ namespace RecipeApp.Services.Services
             };
         }
 
+        public async Task<List<WeeklyCategoryStatsDto>> GetWeeklyCategoryStats()
+        {
+            var actions = await _userActionRepository.GetAll();
+            var recipes = await _recipeRepository.GetAll();
+
+            // ✅ רק קטגוריות שיש בהן מתכונים בפועל
+            var categoriesWithRecipes = recipes
+                .Select(r => r.Category)
+                .ToHashSet();
+
+            var eightWeeksAgo = DateTime.UtcNow.AddDays(-56);
+
+            return actions
+                .Where(ua => ua.ActionType == UserActionType.History
+                          && ua.Category.HasValue
+                          && ua.CreatedAt >= eightWeeksAgo
+                          // ✅ סינון קטגוריות ריקות
+                          && categoriesWithRecipes.Contains(ua.Category.Value))
+                .GroupBy(ua => new
+                {
+                    Week = System.Globalization.ISOWeek.GetYear(ua.CreatedAt) + "-W" +
+                           System.Globalization.ISOWeek.GetWeekOfYear(ua.CreatedAt).ToString("D2"),
+                    WeekStart = ua.CreatedAt.Date.AddDays(
+                        -((int)ua.CreatedAt.DayOfWeek == 0 ? 6 : (int)ua.CreatedAt.DayOfWeek - 1)),
+                    ua.Category
+                })
+                .Select(g => new WeeklyCategoryStatsDto
+                {
+                    Week = g.Key.Week,
+                    // ✅ CultureInfo.InvariantCulture מאלץ אנגלית
+                    WeekLabel = g.Key.WeekStart.ToString("MMM d", System.Globalization.CultureInfo.InvariantCulture)
+                        + "–" +
+                        g.Key.WeekStart.AddDays(6).ToString("MMM d", System.Globalization.CultureInfo.InvariantCulture),
+                    Category = g.Key.Category!.Value,
+                    CategoryName = g.Key.Category!.Value.ToString(),
+                    ViewCount = g.Count()
+                })
+                .OrderBy(s => s.Week)
+                .ThenByDescending(s => s.ViewCount)
+                .ToList();
+        }
+
         //Helpers 
         /// <summary>
         /// כל פעולה ברשימה מקבלת גם:

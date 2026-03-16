@@ -306,6 +306,22 @@ namespace RecipeApp.Controllers
             }
         }
 
+        // GET: api/UserAction/stats/weekly-categories
+        [HttpGet("stats/weekly-categories")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<List<WeeklyCategoryStatsDto>>> GetWeeklyCategoryStats()
+        {
+            try
+            {
+                var stats = await _userActionService.GetWeeklyCategoryStats();
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
         // Helper Methods
         private int GetCurrentUserId()
         {

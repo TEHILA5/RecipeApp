@@ -66,4 +66,13 @@ namespace RecipeApp.Common.DTOs
         public string Email { get; set; } = string.Empty;
         public string NewPassword { get; set; } = string.Empty;
     }
+
+    public class WeeklyCategoryStatsDto
+    {
+        public string Week { get; set; } = ""; // "2024-W03"
+        public string WeekLabel { get; set; } = ""; // "Jan 15–21"
+        public RecipeCategory Category { get; set; }
+        public string CategoryName { get; set; } = "";
+        public int ViewCount { get; set; }
+    }
 }
