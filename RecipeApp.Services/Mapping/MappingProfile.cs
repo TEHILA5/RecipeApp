@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.IdentityModel.Tokens;
+﻿using AutoMapper;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Repository.Entities;
 
@@ -14,33 +8,23 @@ namespace RecipeApp.Services.Mapping
     {
         public MappingProfile()
         {
-            // User 
-
-            // Entity ↔ AdminDto (כולל Id, Email, Phone)
+            // User
             CreateMap<User, UserAdminDto>().ReverseMap();
 
-            // Entity → UserDto  
-            CreateMap<User, UserDto>()
-                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
-                .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Phone))
-                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
+            CreateMap<User, UserDto>();
 
-            // CreateDto → Entity
             CreateMap<UserCreateDto, User>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
 
-            // UpdateDto → Entity  
             CreateMap<UserUpdateDto, User>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
 
-            // AdminUpdateDto → Entity
             CreateMap<UserAdminUpdateDto, User>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
@@ -51,24 +35,18 @@ namespace RecipeApp.Services.Mapping
             CreateMap<Recipe, RecipeDto>()
                 .ForMember(dest => dest.ArrImage, opt => opt.MapFrom(src =>
                     string.IsNullOrEmpty(src.ImageUrl) ? null : src.ImageUrl))
-                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
                 .ForMember(dest => dest.Ingredients, opt => opt.MapFrom(src => src.RecipeIngredients))
                 .ForMember(dest => dest.AverageRating, opt => opt.Ignore())
                 .ForMember(dest => dest.CommentCount, opt => opt.Ignore());
 
             CreateMap<RecipeDto, Recipe>()
-                .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src =>
-                    src.ArrImage == null ? null : src.ArrImage))
-                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => (src.Category)))
+                .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ArrImage))
                 .ForMember(dest => dest.RecipeIngredients, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
 
-            // CreateDto → Entity
             CreateMap<RecipeCreateDto, Recipe>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src =>
-                    src.ArrImage == null ? null : src.ArrImage))
-                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
+                .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ArrImage))
                 .ForMember(dest => dest.RecipeIngredients, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
 
@@ -76,7 +54,7 @@ namespace RecipeApp.Services.Mapping
             CreateMap<Ingredient, IngredientDto>().ReverseMap();
 
             CreateMap<IngredientDto, Ingredient>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore());  
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
 
             CreateMap<IngredientCreateDto, Ingredient>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -97,9 +75,6 @@ namespace RecipeApp.Services.Mapping
             CreateMap<Conversion, ConversionDto>()
                 .ForMember(dest => dest.Ingredient1Name, opt => opt.MapFrom(src => src.Ingredient1.Name))
                 .ForMember(dest => dest.Ingredient2Name, opt => opt.MapFrom(src => src.Ingredient2.Name));
-
-            CreateMap<ConversionDto, Conversion>()
-                 .ForMember(dest => dest.Id, opt => opt.Ignore());  
 
             CreateMap<ConversionCreateDto, Conversion>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -123,10 +98,10 @@ namespace RecipeApp.Services.Mapping
                 .ForMember(dest => dest.User, opt => opt.Ignore())
                 .ForMember(dest => dest.Recipe, opt => opt.Ignore())
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src =>
-                    !string.IsNullOrEmpty(src.Category.ToString() ?? RecipeCategory.Sweats.ToString()) ? 
-                    src.Category : (RecipeCategory?)null));
+                    !string.IsNullOrEmpty(src.Category.ToString() ?? RecipeCategory.Sweats.ToString())
+                        ? src.Category
+                        : (RecipeCategory?)null));
 
-            // Create DTOs
             CreateMap<CommentCreateDto, UserAction>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
@@ -154,7 +129,7 @@ namespace RecipeApp.Services.Mapping
                 .ForMember(dest => dest.RecipeId, opt => opt.Ignore())
                 .ForMember(dest => dest.Content, opt => opt.Ignore())
                 .ForMember(dest => dest.Rating, opt => opt.Ignore())
-                .ForMember(dest => dest.Category, opt => opt.MapFrom(src =>src.Category))
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.User, opt => opt.Ignore())
                 .ForMember(dest => dest.Recipe, opt => opt.Ignore());

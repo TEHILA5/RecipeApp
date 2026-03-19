@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
+﻿using Microsoft.EntityFrameworkCore;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
@@ -15,9 +9,7 @@ namespace RecipeApp.DataContext
     public class RecipeDbContext : DbContext, IContext
     {
         public RecipeDbContext(DbContextOptions<RecipeDbContext> options)
-        : base(options)
-        {
-        }
+            : base(options) { }
 
         public DbSet<User> Users { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
@@ -26,16 +18,12 @@ namespace RecipeApp.DataContext
         public DbSet<Conversion> Conversions { get; set; }
         public DbSet<UserAction> UserActions { get; set; }
 
-        public async Task Save()
-        {
-            await SaveChangesAsync();
-        }
+        public async Task Save() => await SaveChangesAsync();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // RecipeIngredient - Composite Key
             modelBuilder.Entity<RecipeIngredient>()
                 .HasKey(ri => new { ri.RecipeId, ri.IngredientId });
 
@@ -49,7 +37,6 @@ namespace RecipeApp.DataContext
                 .WithMany(i => i.RecipeIngredients)
                 .HasForeignKey(ri => ri.IngredientId);
 
-            // Conversion - Self-referencing relationships
             modelBuilder.Entity<Conversion>()
                 .HasOne(c => c.Ingredient1)
                 .WithMany(i => i.ConversionsFrom)
@@ -62,17 +49,14 @@ namespace RecipeApp.DataContext
                 .HasForeignKey(c => c.IngredientId2)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // User Email - Unique Index
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
-            // Ingredient Name - Unique Index
             modelBuilder.Entity<Ingredient>()
                 .HasIndex(i => i.Name)
                 .IsUnique();
 
-            // UserAction - Indexes
             modelBuilder.Entity<UserAction>()
                 .HasIndex(ua => ua.UserId);
 
@@ -101,16 +85,8 @@ namespace RecipeApp.DataContext
                 .IsUnique()
                 .HasFilter($"[{nameof(UserAction.ActionType)}] = {(int)UserActionType.Book}");
 
-            // Recipe - Indexes
             modelBuilder.Entity<Recipe>()
                 .HasIndex(r => r.Category);
         }
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-        //    if (!optionsBuilder.IsConfigured)
-        //    {
-        //        optionsBuilder.UseSqlServer("Server=T-PC\\SQLEXPRESS;Database=ProjectDB;Trusted_Connection=True;TrustServerCertificate=True;");
-        //    }
-        //}
     }
 }

@@ -10,8 +10,8 @@ namespace RecipeApp.Controllers
     [Authorize]
     public class ChatController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _config;
+        private readonly HttpClient _http;
 
         private const string SYSTEM_PROMPT = @"You are Sweetie, an AI assistant for Sweet & Treat — a dessert recipe app. You are a warm, enthusiastic, and knowledgeable pastry chef assistant.
 
@@ -35,20 +35,19 @@ Be warm, encouraging, and use relevant emojis. When suggesting recipes, always m
 
         public ChatController(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
-            _configuration = configuration;
-            _httpClient = httpClientFactory.CreateClient();
+            _config = configuration;
+            _http = httpClientFactory.CreateClient();
         }
 
-        // POST: api/chat
         [HttpPost]
         public async Task<IActionResult> Chat([FromBody] ChatRequestDto request)
         {
-            var apiKey = _configuration["Gemini:ApiKey"];
+            var apiKey = _config["Gemini:ApiKey"];
             if (string.IsNullOrEmpty(apiKey))
                 return StatusCode(500, new { message = "Gemini API key not configured." });
 
-            // Gemini doesn't have a system role — inject as first exchange
-            var geminiContents = new List<object>
+            // Gemini has no system role — injected as first user/model exchange
+            var contents = new List<object>
             {
                 new {
                     role = "user",
@@ -62,28 +61,27 @@ Be warm, encouraging, and use relevant emojis. When suggesting recipes, always m
 
             foreach (var msg in request.Messages)
             {
-                geminiContents.Add(new
+                contents.Add(new
                 {
                     role = msg.Role == "user" ? "user" : "model",
                     parts = new[] { new { text = msg.Content } }
                 });
             }
 
-            var requestBody = new { contents = geminiContents };
-            var json = JsonSerializer.Serialize(requestBody);
-            var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
+            var json = JsonSerializer.Serialize(new { contents });
+            var body = new StringContent(json, Encoding.UTF8, "application/json");
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
 
             try
             {
-                var response = await _httpClient.PostAsync(url, httpContent);
-                var responseBody = await response.Content.ReadAsStringAsync();
+                var response = await _http.PostAsync(url, body);
+                var raw = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
-                    return StatusCode((int)response.StatusCode, new { message = "Gemini API error", detail = responseBody });
+                    return StatusCode((int)response.StatusCode, new { message = "Gemini API error", detail = raw });
 
-                var parsed = JsonDocument.Parse(responseBody);
-                var text = parsed.RootElement
+                var text = JsonDocument.Parse(raw)
+                    .RootElement
                     .GetProperty("candidates")[0]
                     .GetProperty("content")
                     .GetProperty("parts")[0]

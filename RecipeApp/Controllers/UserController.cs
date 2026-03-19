@@ -13,293 +13,153 @@ namespace RecipeApp.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IUserService _userService;
-        private readonly IConfiguration _configuration;
+        private readonly IUserService _users;
+        private readonly IConfiguration _config;
 
         public UserController(IUserService userService, IConfiguration configuration)
         {
-            _userService = userService;
-            _configuration = configuration;
+            _users = userService;
+            _config = configuration;
         }
 
-        // POST: api/User/register - כולם יכולים
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<ActionResult> Register([FromBody] UserCreateDto createDto)
+        public async Task<ActionResult> Register([FromBody] UserCreateDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
-                var user = await _userService.Register(createDto);
-                var token = GenerateToken(user);
-                var userDto = new UserDto
-                {
-                    Name = user.Name,
-                    Phone = user.Phone,
-                    Email = user.Email,
-                    CreatedAt = user.CreatedAt
-                };
-                return Ok(new { user=userDto, token });
+                var user = await _users.Register(dto);
+                return Ok(new { user = ToUserDto(user), token = GenerateToken(user) });
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
-        // POST: api/User/login - כולם יכולים
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<ActionResult> Login([FromBody] UserLoginDto loginDto)
+        public async Task<ActionResult> Login([FromBody] UserLoginDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
-                var user = await _userService.Login(loginDto);
-                var token = GenerateToken(user); 
-                var userDto = new UserDto
-                {
-                    Name = user.Name,
-                    Phone = user.Phone,
-                    Email = user.Email,
-                    CreatedAt = user.CreatedAt
-                };
-                return Ok(new { user=userDto, token });
+                var user = await _users.Login(dto);
+                return Ok(new { user = ToUserDto(user), token = GenerateToken(user) });
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
-        // GET: api/User/me - משתמש רואה פרטי עצמו
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                await _users.ResetPassword(dto);
+                return Ok(new { message = "Password updated successfully." });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
+        }
+
         [HttpGet("me")]
         [Authorize]
         public async Task<ActionResult<UserDto>> GetMe()
-        { 
+        {
+            try
+            {
+                var user = await _users.GetById(GetCurrentUserId());
+                return Ok(ToUserDto(user));
+            }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
+        }
+
+        [HttpPatch("me")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UserUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
                 var userId = GetCurrentUserId();
-                var user = await _userService.GetById(userId);
-
-                var userDto = new UserDto
-                {
-                    Name = user.Name,
-                    Phone = user.Phone,
-                    Email = user.Email,
-                    CreatedAt = user.CreatedAt
-                };
-
-                return Ok(userDto);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
-        }
-
-        // PATCH: api/User/me -  למשתמש עדכון עצמי  
-        [HttpPatch("me")]
-        [Authorize]
-        public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UserUpdateDto updateDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            try
-            {
-                var userId = GetCurrentUserId();  
-                var userToUpdate = new UserAdminDto
+                var updated = await _users.UpdateItem(userId, new UserAdminDto
                 {
                     Id = userId,
-                    Name = updateDto.Name,
-                    Phone = updateDto.Phone,
-                    Email = updateDto.Email
-                };
-
-                var updated = await _userService.UpdateItem(userId, userToUpdate);
-
-                var userDto = new UserDto
-                {
-                    Name = updated.Name,
-                    Phone = updated.Phone,
-                    Email = updated.Email,
-                    CreatedAt = updated.CreatedAt
-                };
-
-                return Ok(userDto);
+                    Name = dto.Name,
+                    Phone = dto.Phone,
+                    Email = dto.Email
+                });
+                return Ok(ToUserDto(updated));
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
-        // DELETE: api/User/me - מחיקת עצמי
         [HttpDelete("me")]
         [Authorize]
         public async Task<IActionResult> DeleteMe()
-        { 
-            try
-            {
-                var userId = GetCurrentUserId();
-                await _userService.DeleteItem(userId);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+        {
+            try { await _users.DeleteItem(GetCurrentUserId()); return NoContent(); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
-        // GET: api/User - רק מנהל
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<UserDto>>> GetAll()
         {
             try
             {
-                var users = await _userService.GetAll();
-                var userAdminDtos = users.Select(u => new UserAdminDto
-                {
-                    Id = u.Id,
-                    Name = u.Name,
-                    Phone = u.Phone,
-                    Email = u.Email,
-                    CreatedAt = u.CreatedAt
-                }).ToList();
-
-                return Ok(userAdminDtos);
+                var users = await _users.GetAll();
+                return Ok(users.Select(ToAdminDto).ToList());
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
-        // GET: api/User/5 -  מנהל
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<UserDto>> GetById(int id)
         {
-            try
-            {
-                var user = await _userService.GetById(id);
-
-                var userAdminDto = new UserAdminDto
-                {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Phone = user.Phone,
-                    Email = user.Email,
-                    CreatedAt = user.CreatedAt
-                };
-
-                return Ok(userAdminDto);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            try { return Ok(ToAdminDto(await _users.GetById(id))); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
-        // PATCH: api/User/5 -  מנהל
         [HttpPatch("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<UserAdminDto>> UpdateUser(int id, [FromBody] UserAdminUpdateDto updateDto)
+        public async Task<ActionResult<UserAdminDto>> UpdateUser(int id, [FromBody] UserAdminUpdateDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
-                var userToUpdate = new UserAdminDto
+                var updated = await _users.UpdateItem(id, new UserAdminDto
                 {
                     Id = id,
-                    Name = updateDto.Name,
-                    Phone = updateDto.Phone,
-                    Email = updateDto.Email
-                };
-
-                var updated = await _userService.UpdateItem(id, userToUpdate);
-
-                var userAdminDto = new UserAdminDto
-                {
-                    Id = updated.Id,
-                    Name = updated.Name,
-                    Phone = updated.Phone,
-                    Email = updated.Email,
-                    CreatedAt = updated.CreatedAt
-                };
-
-                return Ok(userAdminDto);
+                    Name = dto.Name,
+                    Phone = dto.Phone,
+                    Email = dto.Email
+                });
+                return Ok(ToAdminDto(updated));
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
-        // DELETE: api/User/:id -  מנהל
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            try
-            {
-                await _userService.DeleteItem(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
+            try { await _users.DeleteItem(id); return NoContent(); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
-
-
-        // Helper Methods 
 
         private string GenerateToken(UserAdminDto user)
         {
-            var secret = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var credentials = new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
-
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var role = IsAdminEmail(user.Email) ? "Admin" : "User";
 
             var claims = new[]
@@ -311,55 +171,42 @@ namespace RecipeApp.Controllers
             };
 
             var token = new JwtSecurityToken(
-                _configuration["Jwt:Issuer"],
-                _configuration["Jwt:Audience"],
+                _config["Jwt:Issuer"],
+                _config["Jwt:Audience"],
                 claims,
                 expires: DateTime.Now.AddHours(24),
-                signingCredentials: credentials);
+                signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         private int GetCurrentUserId()
         {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            var userIdClaim = identity?.FindFirst(ClaimTypes.NameIdentifier);
-            return int.Parse(userIdClaim?.Value ?? "0");
-        }
-
-        private bool IsAdmin()
-        {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            var roleClaim = identity?.FindFirst(ClaimTypes.Role);
-            return roleClaim?.Value == "Admin";
+            var claim = (HttpContext.User.Identity as ClaimsIdentity)?.FindFirst(ClaimTypes.NameIdentifier);
+            return int.Parse(claim?.Value ?? "0");
         }
 
         private bool IsAdminEmail(string email)
         {
-            var adminEmail = _configuration["AdminEmail"] ?? "admin@recipeapp.com";
+            var adminEmail = _config["AdminEmail"] ?? "admin@recipeapp.com";
             return string.Equals(email, adminEmail, StringComparison.OrdinalIgnoreCase);
         }
-        // POST: api/User/reset-password - כולם יכולים
-        [HttpPost("reset-password")]
-        [AllowAnonymous]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetDto)
+
+        private static UserDto ToUserDto(UserAdminDto u) => new()
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            try
-            {
-                await _userService.ResetPassword(resetDto);
-                return Ok(new { message = "Password updated successfully." });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-            }
-        }
+            Name = u.Name,
+            Phone = u.Phone,
+            Email = u.Email,
+            CreatedAt = u.CreatedAt
+        };
+
+        private static UserAdminDto ToAdminDto(UserAdminDto u) => new()
+        {
+            Id = u.Id,
+            Name = u.Name,
+            Phone = u.Phone,
+            Email = u.Email,
+            CreatedAt = u.CreatedAt
+        };
     }
 }
-

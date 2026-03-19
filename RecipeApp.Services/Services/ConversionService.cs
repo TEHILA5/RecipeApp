@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
-using RecipeApp.Repository.Repositories;
 using RecipeApp.Services.Interfaces;
 
 namespace RecipeApp.Services.Services
 {
     public class ConversionService : IConversionService
     {
-        private readonly IRepository<Conversion> _conversionRepository;
-        private readonly IRepository<Ingredient> _ingredientRepository;
+        private readonly IRepository<Conversion> _repo;
+        private readonly IRepository<Ingredient> _ingredients;
         private readonly IMapper _mapper;
 
         public ConversionService(
@@ -23,95 +17,69 @@ namespace RecipeApp.Services.Services
             IRepository<Ingredient> ingredientRepository,
             IMapper mapper)
         {
-            _conversionRepository = conversionRepository;
-            _ingredientRepository = ingredientRepository;
+            _repo = conversionRepository;
+            _ingredients = ingredientRepository;
             _mapper = mapper;
         }
 
-        //   Generic CRUD  
         public async Task<List<ConversionDto>> GetAll()
         {
-            var conversions = await _conversionRepository.GetAll();
-            return await EnrichConversions(conversions);
+            return await Enrich(await _repo.GetAll());
         }
 
         public async Task<ConversionDto> GetById(int id)
         {
-            var conversion = await _conversionRepository.GetById(id)
+            var conversion = await _repo.GetById(id)
                 ?? throw new KeyNotFoundException($"Conversion with id {id} not found.");
-
-            var enriched = await EnrichConversions(new[] { conversion });
-            return enriched.First();
+            return (await Enrich(new[] { conversion })).First();
         }
 
         public async Task<ConversionDto> AddItem(ConversionDto item)
         {
-            var ingredients = await _ingredientRepository.GetAll();
-            var id1 = GetIngredientIdByName(ingredients, item.Ingredient1Name);
-            var id2 = GetIngredientIdByName(ingredients, item.Ingredient2Name);
+            var all = await _ingredients.GetAll();
+            var id1 = GetIdByName(all, item.Ingredient1Name);
+            var id2 = GetIdByName(all, item.Ingredient2Name);
 
-            var existing = await FindConversion(id1, id2);
-            if (existing != null)
+            if (await FindConversion(id1, id2) != null)
                 throw new InvalidOperationException(
                     $"Conversion between '{item.Ingredient1Name}' and '{item.Ingredient2Name}' already exists.");
 
-            var conversion = _mapper.Map<Conversion>(item);
-            var created = await _conversionRepository.AddItem(conversion);
-
-            var enriched = await EnrichConversions(new[] { created });
-            return enriched.First();
+            var created = await _repo.AddItem(_mapper.Map<Conversion>(item));
+            return (await Enrich(new[] { created })).First();
         }
 
         public async Task<ConversionDto> UpdateItem(int id, ConversionDto item)
         {
-            var existing = await _conversionRepository.GetById(id)
+            var existing = await _repo.GetById(id)
                 ?? throw new KeyNotFoundException($"Conversion with id {id} not found.");
 
-            var ingredients = await _ingredientRepository.GetAll();
-             
             if (item.ConversionRatio.HasValue)
                 existing.ConversionRatio = item.ConversionRatio.Value;
 
             if (item.IsBidirectional.HasValue)
                 existing.IsBidirectional = item.IsBidirectional.Value;
 
-            var updated = await _conversionRepository.UpdateItem(id, existing);
-
-            var enriched = await EnrichConversions(new[] { updated });
-            return enriched.First();
+            return (await Enrich(new[] { await _repo.UpdateItem(id, existing) })).First();
         }
-
 
         public async Task DeleteItem(int id)
-        { 
-            var existing = await _conversionRepository.GetById(id);
-            if (existing == null)
+        {
+            if (await _repo.GetById(id) == null)
                 throw new KeyNotFoundException($"Conversion with id {id} not found.");
-            await _conversionRepository.DeleteItem(id);
+            await _repo.DeleteItem(id);
         }
-
-        //  Conversion-Specific  
-        /// <summary>
-        /// מחפש רכיב להמרה.  
-        /// בודקת קודם כיוון ישיר, ואם לא נמצא – כיוון הפוך. 
-        /// </summary>
 
         public async Task<ConversionDto> FindConversion(int ingredientId1, int ingredientId2)
         {
-            var conversions = await _conversionRepository.GetAll();
-            var ingredients = await _ingredientRepository.GetAll();
-            var ingredientDict = ingredients.ToDictionary(i => i.Id);
+            var conversions = await _repo.GetAll();
+            var dict = (await _ingredients.GetAll()).ToDictionary(i => i.Id);
 
-            // כיוון ישיר: 
-            //1->2
             var direct = conversions.FirstOrDefault(c =>
                 c.IngredientId1 == ingredientId1 && c.IngredientId2 == ingredientId2);
 
             if (direct != null)
-                return BuildDto(direct, ingredientDict);
+                return BuildDto(direct, dict);
 
-            // כיוון הפוך: חפש 
-            //2->1
             var reverse = conversions.FirstOrDefault(c =>
                 c.IngredientId1 == ingredientId2 && c.IngredientId2 == ingredientId1);
 
@@ -120,10 +88,8 @@ namespace RecipeApp.Services.Services
                 return new ConversionDto
                 {
                     Id = reverse.Id,
-                    Ingredient1Name = ingredientDict.ContainsKey(ingredientId1)
-                        ? ingredientDict[ingredientId1].Name : "Unknown",
-                    Ingredient2Name = ingredientDict.ContainsKey(ingredientId2)
-                        ? ingredientDict[ingredientId2].Name : "Unknown",
+                    Ingredient1Name = dict.ContainsKey(ingredientId1) ? dict[ingredientId1].Name : "Unknown",
+                    Ingredient2Name = dict.ContainsKey(ingredientId2) ? dict[ingredientId2].Name : "Unknown",
                     ConversionRatio = 1m / reverse.ConversionRatio,
                     IsBidirectional = true
                 };
@@ -132,86 +98,56 @@ namespace RecipeApp.Services.Services
             return null!;
         }
 
-        /// <summary>
-        /// יצירת המרה חדשה (Admin בלבד)
-        /// </summary>
-        public async Task<ConversionDto> CreateConversion(ConversionCreateDto createDto)
+        public async Task<ConversionDto> CreateConversion(ConversionCreateDto dto)
         {
-            // בדיקה שהרכיבים קיימים
-            var ingredient1 = await _ingredientRepository.GetById(createDto.IngredientId1);
-            if (ingredient1 == null)
-                throw new KeyNotFoundException($"Ingredient with id {createDto.IngredientId1} not found.");
+            var ing1 = await _ingredients.GetById(dto.IngredientId1)
+                ?? throw new KeyNotFoundException($"Ingredient with id {dto.IngredientId1} not found.");
 
-            var ingredient2 = await _ingredientRepository.GetById(createDto.IngredientId2);
-            if (ingredient2 == null)
-                throw new KeyNotFoundException($"Ingredient with id {createDto.IngredientId2} not found.");
+            var ing2 = await _ingredients.GetById(dto.IngredientId2)
+                ?? throw new KeyNotFoundException($"Ingredient with id {dto.IngredientId2} not found.");
 
-            // בדיקה שההמרה לא קיימת
-            var existing = await FindConversion(createDto.IngredientId1, createDto.IngredientId2);
-            if (existing != null)
+            if (await FindConversion(dto.IngredientId1, dto.IngredientId2) != null)
                 throw new InvalidOperationException(
-                    $"Conversion between '{ingredient1.Name}' and '{ingredient2.Name}' already exists.");
+                    $"Conversion between '{ing1.Name}' and '{ing2.Name}' already exists.");
 
-            var conversion = _mapper.Map<Conversion>(createDto);
-            var created = await _conversionRepository.AddItem(conversion);
-
-            var enriched = await EnrichConversions(new[] { created });
-            return enriched.First();
+            var created = await _repo.AddItem(_mapper.Map<Conversion>(dto));
+            return (await Enrich(new[] { created })).First();
         }
 
-        /// <summary>
-        /// עדכון המרה (Admin בלבד)
-        /// </summary>
-        public async Task<ConversionDto> UpdateConversion(int id, ConversionUpdateDto updateDto)
+        public async Task<ConversionDto> UpdateConversion(int id, ConversionUpdateDto dto)
         {
-            var existing = await _conversionRepository.GetById(id)
+            var existing = await _repo.GetById(id)
                 ?? throw new KeyNotFoundException($"Conversion with id {id} not found.");
 
-            // עדכן רק את השדות שסופקו
-            if (updateDto.ConversionRatio.HasValue)
-            {
-                existing.ConversionRatio = updateDto.ConversionRatio.Value;
-            }
+            if (dto.ConversionRatio.HasValue)
+                existing.ConversionRatio = dto.ConversionRatio.Value;
 
-            if (updateDto.IsBidirectional.HasValue)
-            {
-                existing.IsBidirectional = updateDto.IsBidirectional.Value;
-            }
+            if (dto.IsBidirectional.HasValue)
+                existing.IsBidirectional = dto.IsBidirectional.Value;
 
-            var updated = await _conversionRepository.UpdateItem(id, existing);
-
-            var enriched = await EnrichConversions(new[] { updated });
-            return enriched.First();
+            return (await Enrich(new[] { await _repo.UpdateItem(id, existing) })).First();
         }
 
-        //  Helpers  
-        private async Task<List<ConversionDto>> EnrichConversions(IEnumerable<Conversion> conversions)
+        private async Task<List<ConversionDto>> Enrich(IEnumerable<Conversion> conversions)
         {
-            var ingredients = await _ingredientRepository.GetAll();
-            var ingredientDict = ingredients.ToDictionary(i => i.Id);
-            return conversions.Select(c => BuildDto(c, ingredientDict)).ToList();
+            var dict = (await _ingredients.GetAll()).ToDictionary(i => i.Id);
+            return conversions.Select(c => BuildDto(c, dict)).ToList();
         }
 
-        private static ConversionDto BuildDto(Conversion conversion, Dictionary<int, Ingredient> ingredientDict)
+        private static ConversionDto BuildDto(Conversion c, Dictionary<int, Ingredient> dict) => new()
         {
-            return new ConversionDto
-            {
-                Id = conversion.Id,
-                Ingredient1Name = ingredientDict.ContainsKey(conversion.IngredientId1)
-                    ? ingredientDict[conversion.IngredientId1].Name : "Unknown",
-                Ingredient2Name = ingredientDict.ContainsKey(conversion.IngredientId2)
-                    ? ingredientDict[conversion.IngredientId2].Name : "Unknown",
-                ConversionRatio = conversion.ConversionRatio,
-                IsBidirectional = conversion.IsBidirectional
-            };
-        }
+            Id = c.Id,
+            Ingredient1Name = dict.ContainsKey(c.IngredientId1) ? dict[c.IngredientId1].Name : "Unknown",
+            Ingredient2Name = dict.ContainsKey(c.IngredientId2) ? dict[c.IngredientId2].Name : "Unknown",
+            ConversionRatio = c.ConversionRatio,
+            IsBidirectional = c.IsBidirectional
+        };
 
-        private static int GetIngredientIdByName(List<Ingredient> ingredients, string name)
+        private static int GetIdByName(List<Ingredient> ingredients, string name)
         {
-            var ingredient = ingredients
-                .FirstOrDefault(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase))
-                ?? throw new KeyNotFoundException($"Ingredient '{name}' not found.");
-            return ingredient.Id;
+            return (ingredients.FirstOrDefault(i =>
+                string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase))
+                    ?? throw new KeyNotFoundException($"Ingredient '{name}' not found.")).Id;
         }
     }
 }

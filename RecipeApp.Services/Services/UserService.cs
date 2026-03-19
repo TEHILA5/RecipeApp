@@ -19,8 +19,7 @@ namespace RecipeApp.Services.Services
             _userRepository = userRepository;
             _mapper = mapper;
         }
-
-        //Generic CRUD
+         
         public async Task<List<UserAdminDto>> GetAll()
         {
             var users = await _userRepository.GetAll();
@@ -44,12 +43,10 @@ namespace RecipeApp.Services.Services
 
             if (!string.IsNullOrWhiteSpace(item.Phone))
                 existing.Phone = item.Phone;
-
-            // בדיקת אימייל אם השתנה
+             
             if (!string.IsNullOrEmpty(item.Email) &&
                 !string.Equals(item.Email, existing.Email, StringComparison.OrdinalIgnoreCase))
-            {
-                // בדיקה שהאימייל החדש לא קיים אצל משתמש אחר
+            { 
                 if (await EmailExists(item.Email))
                     throw new InvalidOperationException("Email already exists.");
 
@@ -67,8 +64,7 @@ namespace RecipeApp.Services.Services
                 throw new KeyNotFoundException($"User with id {id} not found.");
             await _userRepository.DeleteItem(id);
         }
-
-        //   User-Specific  
+         
         public async Task<UserAdminDto> Register(UserCreateDto createDto)
         { 
             if (await EmailExists(createDto.Email))
@@ -100,9 +96,7 @@ namespace RecipeApp.Services.Services
             var users = await _userRepository.GetAll();
             return users.Any(u => string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase));
         }
-
-        //  Password Hashing  
-        // הצפנת סיסמה
+         
 
         private static string HashPassword(string password)
         {

@@ -29,8 +29,7 @@ namespace RecipeApp.Services.Services
             _userRepository = userRepository;
             _mapper = mapper;
         }
-
-        //   Generic CRUD  
+         
         public async Task<List<UserActionDto>> GetAll()
         {
             var actions = await _userActionRepository.GetAll();
@@ -74,10 +73,7 @@ namespace RecipeApp.Services.Services
                 throw new KeyNotFoundException($"UserAction with id {id} not found.");
             await _userActionRepository.DeleteItem(id);
         }
-
-        // Create Methods
          
-        // יצירת תגובה חדשה
         public async Task<UserActionDto> CreateComment(int userId, CommentCreateDto createDto)
         { 
             var recipe = await _recipeRepository.GetById(createDto.RecipeId);
@@ -93,8 +89,7 @@ namespace RecipeApp.Services.Services
             var enriched = await EnrichActions(new[] { created });
             return enriched.First();
         }
-         
-        // שמירת מתכון
+          
         public async Task<UserActionDto> CreateBook(int userId, BookCreateDto createDto)
         { 
             var recipe = await _recipeRepository.GetById(createDto.RecipeId);
@@ -119,8 +114,7 @@ namespace RecipeApp.Services.Services
             var enriched = await EnrichActions(new[] { created });
             return enriched.First();
         }
-         
-        // רישום חיפוש בהיסטוריה
+          
         public async Task<UserActionDto> CreateHistory(int userId, HistoryCreateDto createDto)
         { 
             var userAction = _mapper.Map<UserAction>(createDto);
@@ -132,8 +126,7 @@ namespace RecipeApp.Services.Services
             var enriched = await EnrichActions(new[] { created });
             return enriched.First();
         }
-
-        //  UserAction-Specific  
+         
         public async Task<List<UserActionDto>> GetUserComments(int userId)
         {
             var actions = await _userActionRepository.GetAll();
@@ -143,10 +136,7 @@ namespace RecipeApp.Services.Services
 
             return await EnrichActions(comments);
         }
-
-        /// <summary>
-        /// היסטוריית משתמש
-        /// </summary>
+         
         public async Task<List<UserActionDto>> GetUserHistory(int userId)
         {
             var actions = await _userActionRepository.GetAll();
@@ -167,12 +157,7 @@ namespace RecipeApp.Services.Services
 
             return await EnrichActions(saved);
         }
-
-        /// <summary>
-        /// יוצר העדפות משתמש לפי ההיסטוריה
-        /// - FavoriteCategory: הקטגוריה הכי נפוצה אצלו
-        /// - CategoryStats: מונה לכל קטגוריה
-        /// </summary>
+         
         public async Task<UserPreferencesDto> GetUserPreferences(int userId)
         {
             var actions = await _userActionRepository.GetAll();
@@ -205,8 +190,7 @@ namespace RecipeApp.Services.Services
         {
             var actions = await _userActionRepository.GetAll();
             var recipes = await _recipeRepository.GetAll();
-
-            // ✅ רק קטגוריות שיש בהן מתכונים בפועל
+             
             var categoriesWithRecipes = recipes
                 .Select(r => r.Category)
                 .ToHashSet();
@@ -216,8 +200,7 @@ namespace RecipeApp.Services.Services
             return actions
                 .Where(ua => ua.ActionType == UserActionType.History
                           && ua.Category.HasValue
-                          && ua.CreatedAt >= eightWeeksAgo
-                          // ✅ סינון קטגוריות ריקות
+                          && ua.CreatedAt >= eightWeeksAgo 
                           && categoriesWithRecipes.Contains(ua.Category.Value))
                 .GroupBy(ua => new
                 {
@@ -229,8 +212,7 @@ namespace RecipeApp.Services.Services
                 })
                 .Select(g => new WeeklyCategoryStatsDto
                 {
-                    Week = g.Key.Week,
-                    // ✅ CultureInfo.InvariantCulture מאלץ אנגלית
+                    Week = g.Key.Week, 
                     WeekLabel = g.Key.WeekStart.ToString("MMM d", System.Globalization.CultureInfo.InvariantCulture)
                         + "–" +
                         g.Key.WeekStart.AddDays(6).ToString("MMM d", System.Globalization.CultureInfo.InvariantCulture),
@@ -242,12 +224,7 @@ namespace RecipeApp.Services.Services
                 .ThenByDescending(s => s.ViewCount)
                 .ToList();
         }
-
-        //Helpers 
-        /// <summary>
-        /// כל פעולה ברשימה מקבלת גם:
-        /// RecipeName, Category, UserName.
-        /// </summary>
+         
         private async Task<List<UserActionDto>> EnrichActions(IEnumerable<UserAction> actions)
         {
             var actionList = actions.ToList();

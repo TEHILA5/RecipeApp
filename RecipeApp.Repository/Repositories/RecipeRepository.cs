@@ -33,14 +33,12 @@ namespace RecipeApp.Repository.Repositories
                     .ThenInclude(ri => ri.Ingredient)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
-
-        // ⭐ תיקון: לטעון בחזרה את המתכון עם ה-Ingredients
+         
         public async Task<Recipe> AddItem(Recipe item)
         {
             ctx.Recipes.Add(item);
             await ctx.Save();
-
-            // טוען בחזרה את המתכון עם כל ה-Ingredients
+             
             return await ctx.Recipes
                 .Include(r => r.RecipeIngredients)
                     .ThenInclude(ri => ri.Ingredient)

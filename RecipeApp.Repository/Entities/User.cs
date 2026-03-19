@@ -27,8 +27,6 @@ namespace RecipeApp.Repository.Entities
         public string PasswordHash { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        // Navigation Properties 
         public ICollection<UserAction> UserActions { get; set; }
 
     }

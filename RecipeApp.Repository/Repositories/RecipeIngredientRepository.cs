@@ -25,7 +25,6 @@ namespace RecipeApp.Repository.Repositories
 
         public async Task<RecipeIngredient> GetById(int id)
         {
-            // RecipeIngredient אין לו Id יחיד — חיפוש לפי RecipeId
             return await ctx.RecipeIngredients.FirstOrDefaultAsync(x => x.RecipeId == id);
         }
 
@@ -49,8 +48,7 @@ namespace RecipeApp.Repository.Repositories
         }
 
         public async Task DeleteItem(int id)
-        {
-            // RecipeIngredient אין לו Id יחיד — מחיקה לפי RecipeId
+        { 
             var ri = await ctx.RecipeIngredients.FirstOrDefaultAsync(x => x.RecipeId == id);
             ctx.RecipeIngredients.Remove(ri);
             await ctx.Save();

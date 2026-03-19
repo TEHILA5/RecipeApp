@@ -36,7 +36,7 @@ namespace RecipeApp.Repository.Entities
         public int PrepTime { get; set; }
         public int TotalTime { get; set; }
          
-        public string? Tags { get; set; } // JSON string: ["tag1","tag2"]
+        public string? Tags { get; set; } 
          
         public ICollection<RecipeIngredient> RecipeIngredients { get; set; }
         public ICollection<UserAction> UserActions { get; set; }

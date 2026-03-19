@@ -2,15 +2,11 @@
 using RecipeApp.Common.DTOs;
 
 namespace RecipeApp.Service.Validators
-{
-    /// <summary>
-    /// Validator for Ingredient DTO
-    /// </summary>
+{ 
     public class IngredientDtoValidator : AbstractValidator<IngredientCreateDto>
     {
         public IngredientDtoValidator()
-        {
-            // Name validation
+        { 
             RuleFor(x => x.Name)
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage("Ingredient name is required")
@@ -23,8 +19,7 @@ namespace RecipeApp.Service.Validators
     public class IngredientUpdateDtoValidator : AbstractValidator<IngredientUpdateDto>
     {
         public IngredientUpdateDtoValidator()
-        {
-            // Name validation
+        { 
             RuleFor(x => x.Name)
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage("Ingredient name is required")

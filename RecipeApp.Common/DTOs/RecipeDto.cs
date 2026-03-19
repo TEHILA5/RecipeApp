@@ -32,9 +32,7 @@ namespace RecipeApp.Common.DTOs
         public int? TotalTime { get; set; }
         public List<RecipeIngredientDto>? Ingredients { get; set; }
         public double? AverageRating { get; set; }
-        public int? CommentCount { get; set; }
-
-        // ✅ תגיות חופשיות
+        public int? CommentCount { get; set; } 
         public List<string>? Tags { get; set; }
     }
 
@@ -50,8 +48,6 @@ namespace RecipeApp.Common.DTOs
         public int PrepTime { get; set; }
         public int TotalTime { get; set; }
         public List<RecipeIngredientCreateDto> Ingredients { get; set; }
-
-        // ✅ תגיות חופשיות (אופציונלי)
         public List<string>? Tags { get; set; }
     }
 
@@ -67,8 +63,6 @@ namespace RecipeApp.Common.DTOs
         public int? PrepTime { get; set; }
         public int? TotalTime { get; set; }
         public List<RecipeIngredientCreateDto>? Ingredients { get; set; }
-
-        // ✅ תגיות חופשיות (אופציונלי)
         public List<string>? Tags { get; set; }
     }
 

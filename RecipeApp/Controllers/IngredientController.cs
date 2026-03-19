@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
@@ -11,21 +10,19 @@ namespace RecipeApp.Controllers
     [Authorize]
     public class IngredientController : ControllerBase
     {
-        private readonly IIngredientService _ingredientService;
+        private readonly IIngredientService _ingredients;
 
         public IngredientController(IIngredientService ingredientService)
         {
-            _ingredientService = ingredientService;
+            _ingredients = ingredientService;
         }
 
-        // GET: api/Ingredient
         [HttpGet]
         public async Task<ActionResult<List<IngredientDto>>> GetAll()
         {
             try
             {
-                var ingredients = await _ingredientService.GetAll();
-                return Ok(ingredients);
+                return Ok(await _ingredients.GetAll());
             }
             catch (Exception ex)
             {
@@ -33,14 +30,12 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // GET: api/Ingredient/:id
         [HttpGet("{id}")]
         public async Task<ActionResult<IngredientDto>> GetById(int id)
         {
             try
             {
-                var ingredient = await _ingredientService.GetById(id);
-                return Ok(ingredient);
+                return Ok(await _ingredients.GetById(id));
             }
             catch (KeyNotFoundException ex)
             {
@@ -52,18 +47,14 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // POST: api/Ingredient - רק Admin
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IngredientDto>> Create([FromBody] IngredientCreateDto createDto)
+        public async Task<ActionResult<IngredientDto>> Create([FromBody] IngredientCreateDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
-                var created = await _ingredientService.CreateIngredient(createDto);
+                var created = await _ingredients.CreateIngredient(dto);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
             }
             catch (InvalidOperationException ex)
@@ -76,20 +67,14 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // PATCH : api/Ingredient/:id - רק Admin
         [HttpPatch("{id}")]
-        [Authorize(Roles = "Admin")] 
-        public async Task<ActionResult<IngredientDto>> Update(int id, [FromBody] IngredientUpdateDto updateDto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IngredientDto>> Update(int id, [FromBody] IngredientUpdateDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
-                var updated = await _ingredientService.UpdateIngredient(id, updateDto);
-                return Ok(updated);
+                return Ok(await _ingredients.UpdateIngredient(id, dto));
             }
             catch (KeyNotFoundException ex)
             {
@@ -105,14 +90,13 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // DELETE: api/Ingredient/:id - רק Admin
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                await _ingredientService.DeleteItem(id);
+                await _ingredients.DeleteItem(id);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
@@ -125,17 +109,12 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // GET: api/Ingredient/by-name?name=flour
         [HttpGet("by-name")]
         public async Task<ActionResult<IngredientDto>> GetByName([FromQuery] string name)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             try
             {
-                var ingredient = await _ingredientService.GetByName(name);
+                var ingredient = await _ingredients.GetByName(name);
                 if (ingredient == null)
                     return NotFound(new { message = $"Ingredient '{name}' not found." });
                 return Ok(ingredient);

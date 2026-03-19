@@ -1,5 +1,4 @@
-﻿// RecipeApp/Controllers/SearchController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
@@ -10,21 +9,15 @@ namespace RecipeApp.Controllers
     [ApiController]
     public class SearchController : ControllerBase
     {
-        private readonly ITextAnalysisService _textAnalysisService;
-        private readonly IRecipeService _recipeService;
+        private readonly ITextAnalysisService _textAnalysis;
+        private readonly IRecipeService _recipes;
 
-        public SearchController(
-            ITextAnalysisService textAnalysisService,
-            IRecipeService recipeService)
+        public SearchController(ITextAnalysisService textAnalysisService, IRecipeService recipeService)
         {
-            _textAnalysisService = textAnalysisService;
-            _recipeService = recipeService;
+            _textAnalysis = textAnalysisService;
+            _recipes = recipeService;
         }
 
-        /// <summary>
-        /// מנתח טקסט חופשי ומחזיר ParsedSearchIntent
-        /// POST /api/Search/analyze-text
-        /// </summary>
         [HttpPost("analyze-text")]
         [AllowAnonymous]
         public async Task<ActionResult<ParsedSearchIntent>> AnalyzeText([FromBody] string text)
@@ -33,16 +26,11 @@ namespace RecipeApp.Controllers
                 return BadRequest(new { message = "Text cannot be empty." });
             try
             {
-                var intent = await _textAnalysisService.AnalyzeAsync(text);
-                return Ok(intent);
+                return Ok(await _textAnalysis.AnalyzeAsync(text));
             }
             catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
 
-        /// <summary>
-        /// חיפוש מלא — מנתח טקסט ומחזיר מתכונים ישירות
-        /// POST /api/Search/advanced
-        /// </summary>
         [HttpPost("advanced")]
         [AllowAnonymous]
         public async Task<ActionResult<AdvancedSearchResultDto>> AdvancedSearch([FromBody] string text)
@@ -51,19 +39,16 @@ namespace RecipeApp.Controllers
                 return BadRequest(new { message = "Text cannot be empty." });
             try
             {
-                var intent = await _textAnalysisService.AnalyzeAsync(text);
+                var intent = await _textAnalysis.AnalyzeAsync(text);
 
-                // חיפוש לפי תגיות
                 var tagResults = intent.Tags.Count > 0
-                    ? await _recipeService.SearchByTags(intent.Tags)
+                    ? await _recipes.SearchByTags(intent.Tags)
                     : new List<RecipeDto>();
 
-                // חיפוש לפי קטגוריה
                 var categoryResults = intent.Category != null
-                    ? await _recipeService.SearchByCategory(intent.Category)
+                    ? await _recipes.SearchByCategory(intent.Category)
                     : new List<RecipeDto>();
 
-                // מיזוג תוצאות + פילטור לפי difficulty/prepTime
                 var merged = tagResults.Union(categoryResults,
                     EqualityComparer<RecipeDto>.Create(
                         (a, b) => a?.Id == b?.Id,
@@ -76,11 +61,7 @@ namespace RecipeApp.Controllers
                 if (intent.MaxPrepTime.HasValue)
                     merged = merged.Where(r => r.PrepTime <= intent.MaxPrepTime).ToList();
 
-                return Ok(new AdvancedSearchResultDto
-                {
-                    Intent = intent,
-                    Results = merged
-                });
+                return Ok(new AdvancedSearchResultDto { Intent = intent, Results = merged });
             }
             catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }

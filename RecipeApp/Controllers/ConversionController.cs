@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
@@ -11,22 +10,20 @@ namespace RecipeApp.Controllers
     [Authorize]
     public class ConversionController : ControllerBase
     {
-        private readonly IConversionService _conversionService;
+        private readonly IConversionService _conversions;
 
         public ConversionController(IConversionService conversionService)
         {
-            _conversionService = conversionService;
+            _conversions = conversionService;
         }
 
-        // GET: api/Conversion
         [HttpGet]
         [AllowAnonymous]
         public async Task<ActionResult<List<ConversionDto>>> GetAll()
         {
             try
             {
-                var conversions = await _conversionService.GetAll();
-                return Ok(conversions);
+                return Ok(await _conversions.GetAll());
             }
             catch (Exception ex)
             {
@@ -34,14 +31,12 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // GET: api/Conversion/:id
         [HttpGet("{id}")]
         public async Task<ActionResult<ConversionDto>> GetById(int id)
         {
             try
             {
-                var conversion = await _conversionService.GetById(id);
-                return Ok(conversion);
+                return Ok(await _conversions.GetById(id));
             }
             catch (KeyNotFoundException ex)
             {
@@ -53,18 +48,14 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // POST: api/Conversion - רק Admin
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ConversionDto>> Create([FromBody] ConversionCreateDto createDto)
+        public async Task<ActionResult<ConversionDto>> Create([FromBody] ConversionCreateDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
-                var created = await _conversionService.CreateConversion(createDto);
+                var created = await _conversions.CreateConversion(dto);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
             }
             catch (InvalidOperationException ex)
@@ -81,20 +72,14 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // PATCH: api/Conversion/:id - רק Admin
         [HttpPatch("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ConversionDto>> Update(int id, [FromBody] ConversionUpdateDto updateDto)
+        public async Task<ActionResult<ConversionDto>> Update(int id, [FromBody] ConversionUpdateDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
-                var updated = await _conversionService.UpdateConversion(id, updateDto);  // ✅
-                return Ok(updated);
+                return Ok(await _conversions.UpdateConversion(id, dto));
             }
             catch (KeyNotFoundException ex)
             {
@@ -106,14 +91,13 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // DELETE: api/Conversion/:id - רק Admin
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                await _conversionService.DeleteItem(id);
+                await _conversions.DeleteItem(id);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)
@@ -126,20 +110,15 @@ namespace RecipeApp.Controllers
             }
         }
 
-        // GET: api/Conversion/find?ingredientId1=1&ingredientId2=2
         [HttpGet("find")]
         public async Task<ActionResult<ConversionDto>> FindConversion([FromQuery] int ingredientId1, [FromQuery] int ingredientId2)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
             try
             {
-                var conversion = await _conversionService.FindConversion(ingredientId1, ingredientId2);
-                if (conversion == null)
+                var result = await _conversions.FindConversion(ingredientId1, ingredientId2);
+                if (result == null)
                     return NotFound(new { message = "Conversion not found between these ingredients." });
-                return Ok(conversion);
+                return Ok(result);
             }
             catch (Exception ex)
             {

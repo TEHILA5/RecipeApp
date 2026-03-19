@@ -1,5 +1,4 @@
-﻿// RecipeApp.Services/Services/TextAnalysisService.cs
-using Catalyst;
+﻿using Catalyst;
 using FuzzySharp;
 using FuzzySharp.SimilarityRatio;
 using Microsoft.Extensions.Logging;
@@ -17,8 +16,7 @@ namespace RecipeApp.Services.Services
         {
             _logger = logger;
         }
-
-        // ── רשימת קטגוריות ──
+         
         private static readonly List<string> _allCategories =
         [
             "Sweats", "Cakes", "Cupcakes", "Cheesecakes", "BundtCakes",
@@ -29,16 +27,14 @@ namespace RecipeApp.Services.Services
             "EnergyBalls", "SoufleeAndCustard", "MilkDesserts",
             "JellyAndGelatin", "TraditionalDesserts"
         ];
-
-        // ── רמות קושי ──
+         
         private static readonly Dictionary<int, List<string>> _difficultyKeywords = new()
         {
             { 1, ["easy", "simple", "quick", "light", "basic", "beginner", "fast", "effortless", "no-bake", "nobake"] },
             { 2, ["medium", "moderate", "intermediate", "average"] },
             { 3, ["hard", "difficult", "advanced", "complex", "challenging", "expert", "elaborate"] }
         };
-
-        // ── Stop words ──
+         
         private static readonly HashSet<string> _stopWords =
         [
             "i", "want", "a", "an", "the", "and", "or", "for", "to", "of",
@@ -48,8 +44,7 @@ namespace RecipeApp.Services.Services
             "that", "is", "are", "was", "have", "has", "be", "do",
             "it", "this", "these", "give", "show", "suggest"
         ];
-
-        // ── Category aliases ──
+         
         private static readonly Dictionary<string, string> _categoryAliases = new(StringComparer.OrdinalIgnoreCase)
         {
             { "cake", "Cakes" }, { "cakes", "Cakes" },
@@ -71,8 +66,7 @@ namespace RecipeApp.Services.Services
             { "churro", "Churros" }, { "churros", "Churros" },
             { "crumble", "Crumbles" }, { "crumbles", "Crumbles" },
         };
-
-        // ── תגיות תיאוריות ──
+         
         private static readonly HashSet<string> _descriptiveWords =
         [
             "chocolate", "vanilla", "strawberry", "lemon", "caramel", "cinnamon",
@@ -89,8 +83,7 @@ namespace RecipeApp.Services.Services
         private readonly SemaphoreSlim _initLock = new(1, 1);
         private bool _initialized = false;
         private bool _catalystAvailable = false;
-
-        // ── אתחול Catalyst — אם נכשל, ממשיך בלעדיו ──
+         
         private async Task EnsureInitializedAsync()
         {
             if (_initialized) return;
@@ -108,8 +101,7 @@ namespace RecipeApp.Services.Services
                     _logger.LogInformation("Catalyst initialized successfully.");
                 }
                 catch (Exception ex)
-                {
-                    // ✅ Catalyst נכשל — נמשיך עם FuzzySharp בלבד
+                { 
                     _logger.LogWarning("Catalyst initialization failed: {Message}. Falling back to FuzzySharp only.", ex.Message);
                     _catalystAvailable = false;
                     _nlpPipeline = null;
@@ -131,22 +123,17 @@ namespace RecipeApp.Services.Services
 
                 var intent = new ParsedSearchIntent { OriginalText = text };
                 var lower = text.ToLowerInvariant();
-
-                // שלב 1: Tokenize
+                 
                 var meaningfulTokens = ExtractMeaningfulTokens(text);
                 _logger.LogInformation("Tokens extracted: {Tokens}", string.Join(", ", meaningfulTokens));
-
-                // שלב 2: קטגוריה
+                 
                 intent.Category = DetectCategory(lower, meaningfulTokens);
                 _logger.LogInformation("Category detected: {Category}", intent.Category ?? "none");
-
-                // שלב 3: רמת קושי
+                 
                 intent.DifficultyLevel = DetectDifficulty(lower, meaningfulTokens);
-
-                // שלב 4: זמן הכנה
+                 
                 intent.MaxPrepTime = DetectPrepTime(lower);
-
-                // שלב 5: Tags + Keywords
+                 
                 var usedWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 if (intent.Category != null)
                     usedWords.UnionWith(_categoryAliases.Keys);
@@ -169,8 +156,7 @@ namespace RecipeApp.Services.Services
                 throw;
             }
         }
-
-        // ── Tokenize — Catalyst אם זמין, אחרת Fallback ──
+         
         private List<string> ExtractMeaningfulTokens(string text)
         {
             if (_catalystAvailable && _nlpPipeline != null)
@@ -203,16 +189,13 @@ namespace RecipeApp.Services.Services
                 .Where(w => !_stopWords.Contains(w) && w.Length > 1)
                 .Distinct()
                 .ToList();
-
-        // ── זיהוי קטגוריה ──
+         
         private string? DetectCategory(string lower, List<string> tokens)
-        {
-            // 1. בדיקה מדויקת
+        { 
             foreach (var alias in _categoryAliases.OrderByDescending(a => a.Key.Length))
                 if (lower.Contains(alias.Key))
                     return alias.Value;
-
-            // 2. FuzzySharp
+             
             string? bestCategory = null;
             int bestScore = 0;
 
@@ -231,8 +214,7 @@ namespace RecipeApp.Services.Services
 
             return bestCategory;
         }
-
-        // ── זיהוי רמת קושי ──
+         
         private int? DetectDifficulty(string lower, List<string> tokens)
         {
             foreach (var (level, keywords) in _difficultyKeywords)
@@ -240,8 +222,7 @@ namespace RecipeApp.Services.Services
                     return level;
             return null;
         }
-
-        // ── זיהוי זמן הכנה ──
+         
         private int? DetectPrepTime(string lower)
         {
             var timePatterns = new (string pattern, int minutes)[]
@@ -256,8 +237,7 @@ namespace RecipeApp.Services.Services
 
             return null;
         }
-
-        // ── חילוץ Tags ──
+         
         private List<string> ExtractTags(List<string> tokens, HashSet<string> usedWords)
         {
             var tags = new List<string>();

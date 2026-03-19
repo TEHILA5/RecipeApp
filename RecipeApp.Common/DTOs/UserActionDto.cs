@@ -22,9 +22,7 @@ namespace RecipeApp.Common.DTOs
         public string? RecipeName { get; set; }
         public string? RecipeImageUrl { get; set; }
 
-        public RecipeCategory? Category { get; set; }
-
-        // Comment
+        public RecipeCategory? Category { get; set; } 
         public string? UserName { get; set; }
         public string? Content { get; set; }
         public int? Rating { get; set; }
@@ -69,8 +67,8 @@ namespace RecipeApp.Common.DTOs
 
     public class WeeklyCategoryStatsDto
     {
-        public string Week { get; set; } = ""; // "2024-W03"
-        public string WeekLabel { get; set; } = ""; // "Jan 15–21"
+        public string Week { get; set; } = "";  
+        public string WeekLabel { get; set; } = "";  
         public RecipeCategory Category { get; set; }
         public string CategoryName { get; set; } = "";
         public int ViewCount { get; set; }

@@ -15,8 +15,6 @@ namespace RecipeApp.Repository.Entities
         [Required]
         [MaxLength(100)]
         public string Name { get; set; }
-
-        // Navigation Properties
         public ICollection<RecipeIngredient> RecipeIngredients { get; set; }
         public ICollection<Conversion> ConversionsFrom { get; set; }
         public ICollection<Conversion> ConversionsTo { get; set; }

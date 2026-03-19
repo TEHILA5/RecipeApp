@@ -24,9 +24,7 @@ namespace RecipeApp.Services.Services
             _ingredientRepository = ingredientRepository;
             _userActionRepository = userActionRepository;
             _mapper = mapper;
-        }
-
-        // ── Generic CRUD ──
+        } 
 
         public async Task<List<RecipeDto>> GetAll()
         {
@@ -65,14 +63,12 @@ namespace RecipeApp.Services.Services
             if (item.Level.HasValue) existing.Level = item.Level.Value;
             if (item.PrepTime.HasValue) existing.PrepTime = item.PrepTime.Value;
             if (item.TotalTime.HasValue) existing.TotalTime = item.TotalTime.Value;
-
-            // ✅ עדכון Tags
+             
             if (item.Tags != null)
                 existing.Tags = SerializeTags(item.Tags);
 
             if (item.Ingredients != null)
-            {
-                // ✅ נקה וכתוב מחדש - כך מתכונים שהוסרו אכן נמחקים
+            { 
                 existing.RecipeIngredients.Clear();
                 existing.RecipeIngredients = item.Ingredients.Select(ri => new RecipeIngredient
                 {
@@ -93,9 +89,7 @@ namespace RecipeApp.Services.Services
             var existing = await _recipeRepository.GetById(id)
                 ?? throw new KeyNotFoundException($"Recipe with id {id} not found.");
             await _recipeRepository.DeleteItem(id);
-        }
-
-        // ── Recipe-Specific ──
+        } 
 
         public async Task<RecipeDto> CreateRecipe(RecipeCreateDto createDto)
         {
@@ -109,8 +103,7 @@ namespace RecipeApp.Services.Services
                 Servings = createDto.Servings,
                 Level = createDto.Level,
                 PrepTime = createDto.PrepTime,
-                TotalTime = createDto.TotalTime,
-                // ✅ שמירת Tags כ-JSON string
+                TotalTime = createDto.TotalTime, 
                 Tags = SerializeTags(createDto.Tags),
                 RecipeIngredients = createDto.Ingredients?.Select(i => new RecipeIngredient
                 {
@@ -140,8 +133,7 @@ namespace RecipeApp.Services.Services
             existing.Servings = updateDto.Servings;
             existing.Level = updateDto.Level;
             existing.PrepTime = updateDto.PrepTime;
-            existing.TotalTime = updateDto.TotalTime;
-            // ✅ עדכון Tags
+            existing.TotalTime = updateDto.TotalTime; 
             existing.Tags = SerializeTags(updateDto.Tags);
 
             if (updateDto.Ingredients != null)
@@ -192,20 +184,14 @@ namespace RecipeApp.Services.Services
 
             return recipes
                 .Where(r => r.RecipeIngredients != null && r.RecipeIngredients.Any() && (
-                    // תנאי 1 (מקורי): המתכון מכיל את כל הרכיבים שחיפשת
                     ingredientIds.All(id => r.RecipeIngredients.Any(ri => ri.IngredientId == id))
                     ||
-                    // תנאי 2 (חדש): כל רכיבי המתכון נמצאים אצל המשתמש - יש לו הכל לבצע אותו
                     r.RecipeIngredients.All(ri => ingredientIds.Contains(ri.IngredientId))
                 ))
                 .Select(r => MapRecipeWithStats(r, allActions))
                 .ToList();
         }
 
-        /// <summary>
-        /// ✅ חיפוש לפי תגיות - מחזיר מתכונים שמכילים לפחות תגית אחת מהרשימה
-        /// לדוגמה: ["frozen", "chocolate"] → מתכון עם tag "frozen" יוחזר
-        /// </summary>
         public async Task<List<RecipeDto>> SearchByTags(List<string> tags)
         {
             if (tags == null || tags.Count == 0) return new List<RecipeDto>();
@@ -222,7 +208,6 @@ namespace RecipeApp.Services.Services
                 {
                     if (string.IsNullOrEmpty(r.Tags)) return false;
                     var recipeTags = DeserializeTags(r.Tags);
-                    // מחזיר אם יש לפחות תגית אחת משותפת
                     return recipeTags.Any(rt =>
                         normalizedTags.Any(t =>
                             rt.ToLowerInvariant().Contains(t) ||
@@ -312,16 +297,13 @@ namespace RecipeApp.Services.Services
                 .ToList();
         }
 
-        // ── Helpers ──
-
         private RecipeDto MapRecipeWithStats(Recipe recipe, List<UserAction> allActions)
         {
             var dto = _mapper.Map<RecipeDto>(recipe);
 
             if (!string.IsNullOrEmpty(recipe.ImageUrl))
-                dto.ArrImage = recipe.ImageUrl;
+                dto.ArrImage = recipe.ImageUrl; 
 
-            // ✅ המרת Tags מ-JSON string למערך
             dto.Tags = DeserializeTags(recipe.Tags);
 
             var recipeComments = allActions
@@ -340,14 +322,12 @@ namespace RecipeApp.Services.Services
             return dto;
         }
 
-        /// <summary>ממיר List<string> ל-JSON string לשמירה ב-DB</summary>
         private static string? SerializeTags(List<string>? tags)
         {
             if (tags == null || tags.Count == 0) return null;
             return JsonSerializer.Serialize(tags.Select(t => t.Trim().ToLowerInvariant()).Distinct().ToList());
         }
 
-        /// <summary>ממיר JSON string מה-DB חזרה ל-List<string></summary>
         private static List<string> DeserializeTags(string? tagsJson)
         {
             if (string.IsNullOrEmpty(tagsJson)) return new List<string>();

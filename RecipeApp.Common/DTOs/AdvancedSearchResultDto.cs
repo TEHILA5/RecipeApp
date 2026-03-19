@@ -1,5 +1,4 @@
-﻿// RecipeApp.Common/DTOs/AdvancedSearchResultDto.cs
-namespace RecipeApp.Common.DTOs
+﻿namespace RecipeApp.Common.DTOs
 {
     public class AdvancedSearchResultDto
     {
