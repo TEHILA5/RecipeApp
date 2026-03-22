@@ -24,7 +24,7 @@ namespace RecipeApp.Services.Services
             _ingredientRepository = ingredientRepository;
             _userActionRepository = userActionRepository;
             _mapper = mapper;
-        } 
+        }
 
         public async Task<List<RecipeDto>> GetAll()
         {
@@ -63,19 +63,16 @@ namespace RecipeApp.Services.Services
             if (item.Level.HasValue) existing.Level = item.Level.Value;
             if (item.PrepTime.HasValue) existing.PrepTime = item.PrepTime.Value;
             if (item.TotalTime.HasValue) existing.TotalTime = item.TotalTime.Value;
-             
-            if (item.Tags != null)
-                existing.Tags = SerializeTags(item.Tags);
+            if (item.Tags != null) existing.Tags = SerializeTags(item.Tags);
 
             if (item.Ingredients != null)
-            { 
-                existing.RecipeIngredients.Clear();
+            {
                 existing.RecipeIngredients = item.Ingredients.Select(ri => new RecipeIngredient
                 {
                     IngredientId = ri.IngredientId,
                     Quantity = ri.Quantity,
                     Unit = ri.Unit,
-                    Importance = ri.Importance ?? IngredientImportance.Essential // ✅ nullable fix
+                    Importance = ri.Importance ?? IngredientImportance.Essential
                 }).ToList();
             }
 
@@ -86,26 +83,26 @@ namespace RecipeApp.Services.Services
 
         public async Task DeleteItem(int id)
         {
-            var existing = await _recipeRepository.GetById(id)
+            _ = await _recipeRepository.GetById(id)
                 ?? throw new KeyNotFoundException($"Recipe with id {id} not found.");
             await _recipeRepository.DeleteItem(id);
-        } 
+        }
 
-        public async Task<RecipeDto> CreateRecipe(RecipeCreateDto createDto)
+        public async Task<RecipeDto> CreateRecipe(RecipeCreateDto dto)
         {
             var recipe = new Recipe
             {
-                Name = createDto.Name,
-                Description = createDto.Description,
-                Category = createDto.Category,
-                Instructions = createDto.Instructions,
-                ImageUrl = createDto.ArrImage,
-                Servings = createDto.Servings,
-                Level = createDto.Level,
-                PrepTime = createDto.PrepTime,
-                TotalTime = createDto.TotalTime, 
-                Tags = SerializeTags(createDto.Tags),
-                RecipeIngredients = createDto.Ingredients?.Select(i => new RecipeIngredient
+                Name = dto.Name,
+                Description = dto.Description,
+                Category = dto.Category,
+                Instructions = dto.Instructions,
+                ImageUrl = dto.ArrImage,
+                Servings = dto.Servings,
+                Level = dto.Level,
+                PrepTime = dto.PrepTime,
+                TotalTime = dto.TotalTime,
+                Tags = SerializeTags(dto.Tags),
+                RecipeIngredients = dto.Ingredients?.Select(i => new RecipeIngredient
                 {
                     IngredientId = i.IngredientId,
                     Quantity = i.Quantity,
@@ -120,35 +117,33 @@ namespace RecipeApp.Services.Services
             return MapRecipeWithStats(loaded, allActions);
         }
 
-        public async Task<RecipeDto> UpdateRecipe(int id, RecipeCreateDto updateDto)
+        public async Task<RecipeDto> UpdateRecipe(int id, RecipeCreateDto dto)
         {
-            var existing = await _recipeRepository.GetById(id)
-                ?? throw new KeyNotFoundException($"Recipe with id {id} not found.");
-
-            existing.Name = updateDto.Name;
-            existing.Description = updateDto.Description;
-            existing.Category = updateDto.Category;
-            existing.Instructions = updateDto.Instructions;
-            existing.ImageUrl = updateDto.ArrImage;
-            existing.Servings = updateDto.Servings;
-            existing.Level = updateDto.Level;
-            existing.PrepTime = updateDto.PrepTime;
-            existing.TotalTime = updateDto.TotalTime; 
-            existing.Tags = SerializeTags(updateDto.Tags);
-
-            if (updateDto.Ingredients != null)
+            // לא קוראים GetById כאן - Repository יטפל בהכל ישירות מה-DB
+            var recipe = new Recipe
             {
-                existing.RecipeIngredients.Clear();
-                existing.RecipeIngredients = updateDto.Ingredients.Select(i => new RecipeIngredient
+                Name = dto.Name,
+                Description = dto.Description,
+                Category = dto.Category,
+                Instructions = dto.Instructions,
+                ImageUrl = dto.ArrImage,
+                Servings = dto.Servings,
+                Level = dto.Level,
+                PrepTime = dto.PrepTime,
+                TotalTime = dto.TotalTime,
+                Tags = SerializeTags(dto.Tags),
+                RecipeIngredients = dto.Ingredients?.Select(i => new RecipeIngredient
                 {
                     IngredientId = i.IngredientId,
                     Quantity = i.Quantity,
                     Unit = i.Unit,
                     Importance = i.Importance
-                }).ToList();
-            }
+                }).ToList() ?? new List<RecipeIngredient>()
+            };
 
-            var updated = await _recipeRepository.UpdateItem(id, existing);
+            var updated = await _recipeRepository.UpdateItem(id, recipe);
+            if (updated == null) throw new KeyNotFoundException($"Recipe with id {id} not found.");
+
             var allActions = await _userActionRepository.GetAll();
             return MapRecipeWithStats(updated, allActions);
         }
@@ -199,9 +194,7 @@ namespace RecipeApp.Services.Services
             var recipes = await _recipeRepository.GetAll();
             var allActions = await _userActionRepository.GetAll();
 
-            var normalizedTags = tags
-                .Select(t => t.Trim().ToLowerInvariant())
-                .ToList();
+            var normalizedTags = tags.Select(t => t.Trim().ToLowerInvariant()).ToList();
 
             return recipes
                 .Where(r =>
@@ -267,7 +260,7 @@ namespace RecipeApp.Services.Services
 
             if (recommended.Count < MIN_RESULTS)
             {
-                var moreRecipes = recipes
+                var more = recipes
                     .Where(r => !seenRecipeIds.Contains(r.Id) && !recommended.Any(rec => rec.Id == r.Id))
                     .OrderByDescending(r => allActions
                         .Where(ua => ua.RecipeId == r.Id && ua.ActionType == UserActionType.Comment && ua.Rating.HasValue)
@@ -275,7 +268,7 @@ namespace RecipeApp.Services.Services
                         .DefaultIfEmpty(0).Average())
                     .Take(MIN_RESULTS - recommended.Count)
                     .ToList();
-                recommended.AddRange(moreRecipes);
+                recommended.AddRange(more);
             }
 
             if (recommended.Count < MIN_RESULTS)
@@ -302,17 +295,17 @@ namespace RecipeApp.Services.Services
             var dto = _mapper.Map<RecipeDto>(recipe);
 
             if (!string.IsNullOrEmpty(recipe.ImageUrl))
-                dto.ArrImage = recipe.ImageUrl; 
+                dto.ArrImage = recipe.ImageUrl;
 
             dto.Tags = DeserializeTags(recipe.Tags);
 
-            var recipeComments = allActions
+            var comments = allActions
                 .Where(ua => ua.RecipeId == recipe.Id && ua.ActionType == UserActionType.Comment)
                 .ToList();
 
-            dto.CommentCount = recipeComments.Count;
-            dto.AverageRating = recipeComments.Count > 0
-                ? recipeComments
+            dto.CommentCount = comments.Count;
+            dto.AverageRating = comments.Count > 0
+                ? comments
                     .Where(ua => ua.Rating.HasValue)
                     .Select(ua => (double)ua.Rating!.Value)
                     .DefaultIfEmpty(0)

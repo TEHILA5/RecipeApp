@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
 
@@ -21,9 +16,9 @@ namespace RecipeApp.Repository.Repositories
         public async Task<List<Recipe>> GetAll()
         {
             return await ctx.Recipes
-               .Include(r => r.RecipeIngredients)
-                   .ThenInclude(ri => ri.Ingredient)
-               .ToListAsync();
+                .Include(r => r.RecipeIngredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .ToListAsync();
         }
 
         public async Task<Recipe> GetById(int id)
@@ -33,12 +28,11 @@ namespace RecipeApp.Repository.Repositories
                     .ThenInclude(ri => ri.Ingredient)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
-         
+
         public async Task<Recipe> AddItem(Recipe item)
         {
             ctx.Recipes.Add(item);
             await ctx.Save();
-             
             return await ctx.Recipes
                 .Include(r => r.RecipeIngredients)
                     .ThenInclude(ri => ri.Ingredient)
@@ -47,23 +41,41 @@ namespace RecipeApp.Repository.Repositories
 
         public async Task<Recipe> UpdateItem(int id, Recipe recipe)
         {
-            var r = await ctx.Recipes
-               .Include(x => x.RecipeIngredients)
-                   .ThenInclude(ri => ri.Ingredient)
-               .FirstOrDefaultAsync(x => x.Id == id);
+            // ExecuteDeleteAsync/ExecuteUpdateAsync עוקפים את ה-tracking לחלוטין
+            await ctx.RecipeIngredients
+                .Where(ri => ri.RecipeId == id)
+                .ExecuteDeleteAsync();
 
-            r.Name = recipe.Name;
-            r.Description = recipe.Description;
-            r.Category = recipe.Category;
-            r.Instructions = recipe.Instructions;
-            r.ImageUrl = recipe.ImageUrl;
-            r.Servings = recipe.Servings;
-            r.Level = recipe.Level;
-            r.PrepTime = recipe.PrepTime;
-            r.TotalTime = recipe.TotalTime;
+            await ctx.Recipes
+                .Where(r => r.Id == id)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.Name, recipe.Name)
+                    .SetProperty(r => r.Description, recipe.Description)
+                    .SetProperty(r => r.Category, recipe.Category)
+                    .SetProperty(r => r.Instructions, recipe.Instructions)
+                    .SetProperty(r => r.ImageUrl, recipe.ImageUrl)
+                    .SetProperty(r => r.Servings, recipe.Servings)
+                    .SetProperty(r => r.Level, recipe.Level)
+                    .SetProperty(r => r.PrepTime, recipe.PrepTime)
+                    .SetProperty(r => r.TotalTime, recipe.TotalTime)
+                    .SetProperty(r => r.Tags, recipe.Tags)
+                );
 
-            await ctx.Save();
-             
+            if (recipe.RecipeIngredients?.Any() == true)
+            {
+                var newIngredients = recipe.RecipeIngredients.Select(ri => new RecipeIngredient
+                {
+                    RecipeId = id,
+                    IngredientId = ri.IngredientId,
+                    Quantity = ri.Quantity,
+                    Unit = ri.Unit,
+                    Importance = ri.Importance
+                }).ToList();
+
+                ctx.RecipeIngredients.AddRange(newIngredients);
+                await ctx.Save();
+            }
+
             return await ctx.Recipes
                 .Include(x => x.RecipeIngredients)
                     .ThenInclude(ri => ri.Ingredient)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
+using RecipeApp.Repository.Entities;
 
 namespace RecipeApp.Controllers
 {
@@ -55,28 +56,27 @@ namespace RecipeApp.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             try
             {
-                var recipeDto = new RecipeDto
+                var createDto = new RecipeCreateDto
                 {
-                    Id = id,
-                    Name = dto.Name,
-                    Description = dto.Description,
-                    Category = dto.Category,
-                    Instructions = dto.Instructions,
-                    ArrImage = dto.ArrImage,
-                    Servings = dto.Servings,
-                    Level = dto.Level,
-                    PrepTime = dto.PrepTime,
-                    TotalTime = dto.TotalTime,
+                    Name = dto.Name ?? "",
+                    Description = dto.Description ?? "",
+                    Category = dto.Category ?? RecipeCategory.Sweats,
+                    Instructions = dto.Instructions ?? "",
+                    ArrImage = dto.ArrImage ?? "",
+                    Servings = dto.Servings ?? 4,
+                    Level = dto.Level ?? 1,
+                    PrepTime = dto.PrepTime ?? 15,
+                    TotalTime = dto.TotalTime ?? 60,
                     Tags = dto.Tags,
-                    Ingredients = dto.Ingredients?.Select(i => new RecipeIngredientDto
+                    Ingredients = dto.Ingredients?.Select(i => new RecipeIngredientCreateDto
                     {
                         IngredientId = i.IngredientId,
                         Quantity = i.Quantity,
-                        Unit = i.Unit,
+                        Unit = i.Unit ?? "g",
                         Importance = i.Importance,
-                    }).ToList()
+                    }).ToList() ?? new List<RecipeIngredientCreateDto>()
                 };
-                return Ok(await _recipes.UpdateItem(id, recipeDto));
+                return Ok(await _recipes.UpdateRecipe(id, createDto));
             }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
             catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }

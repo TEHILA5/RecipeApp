@@ -37,7 +37,8 @@ namespace RecipeApp.Services.Mapping
                     string.IsNullOrEmpty(src.ImageUrl) ? null : src.ImageUrl))
                 .ForMember(dest => dest.Ingredients, opt => opt.MapFrom(src => src.RecipeIngredients))
                 .ForMember(dest => dest.AverageRating, opt => opt.Ignore())
-                .ForMember(dest => dest.CommentCount, opt => opt.Ignore());
+                .ForMember(dest => dest.CommentCount, opt => opt.Ignore())
+                .ForMember(dest => dest.Tags, opt => opt.Ignore()); 
 
             CreateMap<RecipeDto, Recipe>()
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ArrImage))
