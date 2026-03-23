@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using RecipeApp.Common.DTOs;
 using RecipeApp.DataContext;
 using RecipeApp.Repository.Interfaces;
 using RecipeApp.Repository.Repositories;
@@ -92,6 +93,9 @@ namespace RecipeApp
 
             builder.Services.AddRepositories();
             builder.Services.AddServices();
+            builder.Services.Configure<EmailSettings>(
+                    builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<ITextAnalysisService, TextAnalysisService>();
             builder.Services.AddHttpClient();
 
