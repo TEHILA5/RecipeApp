@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
@@ -37,55 +38,109 @@ namespace RecipeApp.Controllers
         {
             if (string.IsNullOrWhiteSpace(text))
                 return BadRequest(new { message = "Text cannot be empty." });
-
             try
             {
                 var intent = await _textAnalysis.AnalyzeAsync(text);
+                var all = await _recipes.GetAll();
 
-                // step 1: get pool by category (or all if no category detected)
-                var pool = intent.Category != null
-                    ? await _recipes.SearchByCategory(intent.Category)
-                    : await _recipes.GetAll();
-
-                // step 2: filter by difficulty if requested
-                if (intent.DifficultyLevel.HasValue)
-                    pool = pool.Where(r => r.Level == intent.DifficultyLevel).ToList();
-
-                // step 3: filter by prep time if requested
-                if (intent.MaxPrepTime.HasValue)
-                    pool = pool.Where(r => r.PrepTime <= intent.MaxPrepTime).ToList();
-
-                // step 4: cascade tag filtering
-                // try all tags → if no results, try X-1 → X-2 ... → 0 (no tag filter)
-                var results = pool;
-
-                if (intent.Tags.Count > 0)
+                List<RankedRecipeDto> ranked = all
+                    .Select(r => RankRecipe(r, intent))
+                    .Where(r => r.MatchScore > 0)
+                    .OrderByDescending(r => r.MatchScore)
+                    .ToList();
+                 
+                if (ranked.Count == 0)
                 {
-                    for (int required = intent.Tags.Count; required >= 1; required--)
-                    {
-                        var filtered = pool.Where(r =>
-                            CountMatchingTags(r, intent.Tags) >= required
-                        ).ToList();
-
-                        if (filtered.Count > 0)
+                    ranked = all
+                        .OrderByDescending(r => r.AverageRating)
+                        .Take(6)
+                        .Select(r => new RankedRecipeDto
                         {
-                            // sort by how many tags match (best first)
-                            results = filtered
-                                .OrderByDescending(r => CountMatchingTags(r, intent.Tags))
-                                .ToList();
-                            break;
-                        }
-
-                        // if even 1 tag didn't match — return unfiltered pool
-                        if (required == 1)
-                            results = pool;
-                    }
+                            Recipe = r,
+                            MatchScore = 1,
+                            MatchLabel = "Suggested for you",
+                            MatchedCriteria = [],
+                            MissedCriteria = ["No criteria matched"]
+                        })
+                        .ToList();
                 }
 
-                return Ok(new AdvancedSearchResultDto { Intent = intent, Results = results });
+                return Ok(new AdvancedSearchResultDto { Intent = intent, Results = ranked });
             }
             catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
+
+        private RankedRecipeDto RankRecipe(RecipeDto recipe, ParsedSearchIntent intent)
+        {
+            var matched = new List<string>();
+            var missed = new List<string>();
+             
+            bool categoryMatch = intent.Category == null ||
+                 string.Equals(recipe.Category?.ToString(), intent.Category, StringComparison.OrdinalIgnoreCase);
+            if (intent.Category != null)
+                (categoryMatch ? matched : missed).Add($"Category: {intent.Category}");
+             
+            bool diffMatch = !intent.DifficultyLevel.HasValue || recipe.Level == intent.DifficultyLevel;
+            if (intent.DifficultyLevel.HasValue)
+                (diffMatch ? matched : missed).Add($"Difficulty: {LevelLabel(intent.DifficultyLevel.Value)}");
+             
+            bool timeMatch = !intent.MaxPrepTime.HasValue || recipe.PrepTime <= intent.MaxPrepTime;
+            if (intent.MaxPrepTime.HasValue)
+                (timeMatch ? matched : missed).Add($"Prep time ≤ {intent.MaxPrepTime} min");
+             
+            int tagCount = intent.Tags.Count;
+            int matchedTags = tagCount > 0 ? CountMatchingTags(recipe, intent.Tags) : 0;
+            bool allTagsMatch = tagCount == 0 || matchedTags == tagCount;
+            if (tagCount > 0)
+            {
+                if (matchedTags > 0)
+                    matched.Add($"Tags: {matchedTags}/{tagCount} matched");
+                else
+                    missed.Add($"Tags: 0/{tagCount} matched");
+            }
+             
+            bool hasAnyCriteria = intent.Category != null || intent.DifficultyLevel.HasValue
+                                  || intent.MaxPrepTime.HasValue || tagCount > 0;
+            if (!hasAnyCriteria) return new RankedRecipeDto { MatchScore = 0 };
+
+            int score = 0;
+            if (categoryMatch) score += 40;
+            if (diffMatch) score += 20;
+            if (timeMatch) score += 15;
+            if (tagCount > 0) score += (int)(25.0 * matchedTags / tagCount);
+
+            if (!categoryMatch && matchedTags == 0) return new RankedRecipeDto { MatchScore = 0 };
+             
+            string label = score switch
+            {
+                >= 95 => "⭐ Perfect Match",
+                >= 75 => "✅ Great Match",
+                >= 55 => "🟡 Partial Match",
+                _ => "🔵 Loose Match"
+            };
+             
+            if (missed.Count == 1 && missed[0].StartsWith("Difficulty"))
+                label = "✅ Matches — different difficulty";
+            else if (missed.Count == 1 && missed[0].StartsWith("Prep"))
+                label = "✅ Matches — longer prep time";
+
+            return new RankedRecipeDto
+            {
+                Recipe = recipe,
+                MatchScore = score,
+                MatchLabel = label,
+                MatchedCriteria = matched,
+                MissedCriteria = missed
+            };
+        }
+
+        private static string LevelLabel(int level) => level switch
+        {
+            1 => "Easy",
+            2 => "Medium",
+            3 => "Hard",
+            _ => level.ToString()
+        };
 
         private static int CountMatchingTags(RecipeDto recipe, List<string> tags)
         {

@@ -109,14 +109,91 @@ namespace RecipeApp.Services.Services
  
       <div class='cta'>
         <a href = 'http://localhost:5173/recipes' > Explore All Recipes →</a>
+          </div>
+        </div>
+        <div class='footer'>
+          © 2026 Sweet&amp;Treat — Made with 💕<br>
+          You're receiving this because you subscribed at sweetandtreat.com
+        </div>
       </div>
-    </div>
-    <div class='footer'>
-      © 2026 Sweet&amp;Treat — Made with 💕<br>
-      You're receiving this because you subscribed at sweetandtreat.com
-    </div>
-  </div>
-</body>
-</html>";
+    </body>
+    </html>";
+
+        public async Task SendContactToAdminAsync(ContactMessageDto dto)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(dto.Name, dto.Email));
+            message.To.Add(new MailboxAddress(_settings.SenderName, _settings.SenderEmail));
+            message.Subject = $"[Sweet&Treat Contact] {dto.Category} — {dto.Urgency} | {dto.Name}";
+
+            var builder = new BodyBuilder
+            {
+                HtmlBody = $@"
+        <div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px'>
+          <h2 style='color:#d4547a'>📬 New Contact Message</h2>
+          <table style='width:100%;border-collapse:collapse'>
+            <tr><td style='padding:8px;font-weight:bold;color:#374151'>Name:</td><td style='padding:8px'>{dto.Name}</td></tr>
+            <tr style='background:#fdf2f8'><td style='padding:8px;font-weight:bold;color:#374151'>Email:</td><td style='padding:8px'><a href='mailto:{dto.Email}'>{dto.Email}</a></td></tr>
+            <tr><td style='padding:8px;font-weight:bold;color:#374151'>Category:</td><td style='padding:8px'>{dto.Category}</td></tr>
+            <tr style='background:#fdf2f8'><td style='padding:8px;font-weight:bold;color:#374151'>Recipe:</td><td style='padding:8px'>{dto.RecipeName ?? "—"}</td></tr>
+            <tr><td style='padding:8px;font-weight:bold;color:#374151'>Urgency:</td><td style='padding:8px'>{dto.Urgency}</td></tr>
+          </table>
+          <div style='margin-top:20px;padding:16px;background:#fdf2f8;border-radius:12px'>
+            <strong style='color:#374151'>Message:</strong>
+            <p style='color:#4b5563;margin-top:8px'>{dto.Message}</p>
+          </div>
+          <p style='color:#9ca3af;font-size:0.8rem;margin-top:24px'>Sent via Sweet&amp;Treat Contact Form</p>
+        </div>"
+            };
+
+            message.Body = builder.ToMessageBody();
+            using var client = new SmtpClient();
+            await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_settings.SenderEmail, _settings.AppPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
+
+        public async Task SendReplyToUserAsync(string toEmail, string toName, string subject, string replyContent)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_settings.SenderName, _settings.SenderEmail));
+            message.To.Add(new MailboxAddress(toName, toEmail));
+            message.Subject = $"Re: {subject} — Sweet&Treat";
+
+            var builder = new BodyBuilder
+            {
+                HtmlBody = $@"
+        <!DOCTYPE html><html><head><meta charset='utf-8'></head>
+        <body style='font-family:Arial,sans-serif;background:#fdf2f8;margin:0;padding:0'>
+          <div style='max-width:600px;margin:0 auto;background:white;border-radius:20px;overflow:hidden'>
+            <div style='background:linear-gradient(135deg,#d4547a,#e8799a);padding:40px 32px;text-align:center;color:white'>
+              <div style='font-size:2.5rem;margin-bottom:8px'>🍰</div>
+              <h1 style='margin:0 0 6px;font-size:1.6rem'>Sweet&amp;Treat</h1>
+              <p style='margin:0;opacity:0.9'>We've replied to your message</p>
+            </div>
+            <div style='padding:40px 32px'>
+              <p style='color:#374151;font-size:1rem'>Hi {toName}! 👋</p>
+              <p style='color:#374151'>Thank you for reaching out. Here's our response to your message:</p>
+              <div style='background:#fdf2f8;border-left:4px solid #d4547a;border-radius:8px;padding:20px;margin:24px 0'>
+                <p style='color:#1f2937;line-height:1.7;margin:0'>{replyContent}</p>
+              </div>
+              <p style='color:#6b7280;font-size:0.9rem'>If you have any further questions, feel free to contact us again.</p>
+              <p style='color:#6b7280;font-size:0.9rem'>With love, 💕<br><strong style='color:#d4547a'>The Sweet&amp;Treat Team</strong></p>
+            </div>
+            <div style='background:#fdf2f8;padding:20px 32px;text-align:center;color:#9ca3af;font-size:0.8rem'>
+              © 2026 Sweet&amp;Treat — Made with 💕
+            </div>
+          </div>
+        </body></html>"
+            };
+
+            message.Body = builder.ToMessageBody();
+            using var client = new SmtpClient();
+            await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_settings.SenderEmail, _settings.AppPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
     }
 }

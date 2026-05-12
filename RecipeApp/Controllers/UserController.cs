@@ -170,11 +170,12 @@ namespace RecipeApp.Controllers
                 new Claim(ClaimTypes.Role, role)
             };
 
+            var expirationMinutes = _config.GetValue<int>("Jwt:ExpirationMinutes");
             var token = new JwtSecurityToken(
                 _config["Jwt:Issuer"],
                 _config["Jwt:Audience"],
                 claims,
-                expires: DateTime.Now.AddHours(24),
+                expires: DateTime.Now.AddMinutes(expirationMinutes),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

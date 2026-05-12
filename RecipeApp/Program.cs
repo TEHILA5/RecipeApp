@@ -98,6 +98,7 @@ namespace RecipeApp
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<ITextAnalysisService, TextAnalysisService>();
             builder.Services.AddHttpClient();
+            builder.Services.AddSignalR();
 
             var app = builder.Build();
 
@@ -111,6 +112,7 @@ namespace RecipeApp
             app.UseCors("AllowReactApp");
             app.UseAuthentication();
             app.UseAuthorization();
+            app.MapHub<RecipeApp.Hubs.ChatHub>("/hubs/chat");
             app.MapControllers();
             app.Run();
         }
