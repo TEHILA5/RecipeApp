@@ -119,7 +119,6 @@ namespace RecipeApp.Services.Services
 
         public async Task<RecipeDto> UpdateRecipe(int id, RecipeCreateDto dto)
         {
-            // לא קוראים GetById כאן - Repository יטפל בהכל ישירות מה-DB
             var recipe = new Recipe
             {
                 Name = dto.Name,

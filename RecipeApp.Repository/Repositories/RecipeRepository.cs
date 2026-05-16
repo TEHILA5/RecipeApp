@@ -41,7 +41,6 @@ namespace RecipeApp.Repository.Repositories
 
         public async Task<Recipe> UpdateItem(int id, Recipe recipe)
         {
-            // ExecuteDeleteAsync/ExecuteUpdateAsync עוקפים את ה-tracking לחלוטין
             await ctx.RecipeIngredients
                 .Where(ri => ri.RecipeId == id)
                 .ExecuteDeleteAsync();

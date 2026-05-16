@@ -46,7 +46,6 @@ Be warm, encouraging, and use relevant emojis. When suggesting recipes, always m
             if (string.IsNullOrEmpty(apiKey))
                 return StatusCode(500, new { message = "Gemini API key not configured." });
 
-            // Gemini has no system role — injected as first user/model exchange
             var contents = new List<object>
             {
                 new {

@@ -1,5 +1,4 @@
-﻿// RecipeApp.Services/Interfaces/ITextAnalysisService.cs
-using RecipeApp.Common.DTOs;
+﻿using RecipeApp.Common.DTOs;
 
 namespace RecipeApp.Services.Interfaces
 {

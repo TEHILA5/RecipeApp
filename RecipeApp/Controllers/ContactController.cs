@@ -15,7 +15,6 @@ namespace RecipeApp.Controllers
             _emailService = emailService;
         }
 
-        // POST: api/Contact/send — כל משתמש
         [HttpPost("send")]
         [AllowAnonymous]
         public async Task<IActionResult> Send([FromBody] ContactMessageDto dto)
@@ -29,8 +28,7 @@ namespace RecipeApp.Controllers
             }
             catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }
-
-        // POST: api/Contact/reply — רק Admin
+         
         [HttpPost("reply")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Reply([FromBody] AdminReplyDto dto)

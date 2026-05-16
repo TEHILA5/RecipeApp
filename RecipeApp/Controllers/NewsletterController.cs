@@ -13,8 +13,7 @@ namespace RecipeApp.Controllers
         {
             _emailService = emailService;
         }
-
-        // POST: api/Newsletter/subscribe
+         
         [HttpPost("subscribe")]
         public async Task<IActionResult> Subscribe([FromBody] NewsletterSubscribeDto dto)
         {

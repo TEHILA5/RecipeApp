@@ -8,7 +8,6 @@ namespace RecipeApp.Services.Mapping
     {
         public MappingProfile()
         {
-            // User
             CreateMap<User, UserAdminDto>().ReverseMap();
 
             CreateMap<User, UserDto>();
@@ -31,7 +30,6 @@ namespace RecipeApp.Services.Mapping
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
 
-            // Recipe
             CreateMap<Recipe, RecipeDto>()
                 .ForMember(dest => dest.ArrImage, opt => opt.MapFrom(src =>
                     string.IsNullOrEmpty(src.ImageUrl) ? null : src.ImageUrl))
@@ -51,7 +49,6 @@ namespace RecipeApp.Services.Mapping
                 .ForMember(dest => dest.RecipeIngredients, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
 
-            // Ingredient
             CreateMap<Ingredient, IngredientDto>().ReverseMap();
 
             CreateMap<IngredientDto, Ingredient>()
@@ -63,7 +60,6 @@ namespace RecipeApp.Services.Mapping
                 .ForMember(dest => dest.ConversionsFrom, opt => opt.Ignore())
                 .ForMember(dest => dest.ConversionsTo, opt => opt.Ignore());
 
-            // RecipeIngredient
             CreateMap<RecipeIngredient, RecipeIngredientDto>()
                 .ForMember(dest => dest.IngredientName, opt => opt.MapFrom(src => src.Ingredient.Name))
                 .ForMember(dest => dest.Importance, opt => opt.MapFrom(src => src.Importance.ToString()));
@@ -72,7 +68,6 @@ namespace RecipeApp.Services.Mapping
                 .ForMember(dest => dest.Recipe, opt => opt.Ignore())
                 .ForMember(dest => dest.Ingredient, opt => opt.Ignore());
 
-            // Conversion
             CreateMap<Conversion, ConversionDto>()
                 .ForMember(dest => dest.Ingredient1Name, opt => opt.MapFrom(src => src.Ingredient1.Name))
                 .ForMember(dest => dest.Ingredient2Name, opt => opt.MapFrom(src => src.Ingredient2.Name));
@@ -88,7 +83,6 @@ namespace RecipeApp.Services.Mapping
                 .ForMember(dest => dest.Ingredient1, opt => opt.Ignore())
                 .ForMember(dest => dest.Ingredient2, opt => opt.Ignore());
 
-            // UserAction
             CreateMap<UserAction, UserActionDto>()
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src =>
                     src.Category.HasValue ? src.Category.Value.ToString() : null))
