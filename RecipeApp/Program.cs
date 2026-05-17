@@ -114,7 +114,11 @@ namespace RecipeApp
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<RecipeDbContext>();
+                db.Database.Migrate();
+            }
             //app.UseHttpsRedirection();
             app.UseCors("AllowReactApp");
             app.UseAuthentication();
