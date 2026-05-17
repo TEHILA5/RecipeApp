@@ -3,7 +3,6 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RecipeApp.Common.DTOs;
@@ -108,18 +107,16 @@ namespace RecipeApp
             builder.Services.AddSignalR();
 
             var app = builder.Build();
-
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+             
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<RecipeDbContext>();
                 db.Database.Migrate();
             }
-            //app.UseHttpsRedirection();
+             
+            app.UseSwagger();
+            app.UseSwaggerUI();
+             
             app.UseCors("AllowReactApp");
             app.UseAuthentication();
             app.UseAuthorization();
