@@ -107,12 +107,13 @@ namespace RecipeApp
             builder.Services.AddSignalR();
 
             var app = builder.Build();
-             
+
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<RecipeDbContext>();
-                if (app.Environment.IsProduction())
-                    db.Database.EnsureCreated();
+                if (app.Environment.IsProduction()) { 
+                    db.Database.EnsureDeleted();
+                    db.Database.EnsureCreated();}
                 else
                     db.Database.Migrate();
             }
