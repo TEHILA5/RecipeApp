@@ -101,7 +101,7 @@ namespace RecipeApp.Services.Services
             "indian", "chinese", "thai", "mexican", "portuguese", "belgian",
         ];
 
-        public Task<ParsedSearchIntent> AnalyzeAsync(string text)
+        public Task<ParsedSearchIntent> AnalyzeAsync(string text, List<string>? knownIngredients = null)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return Task.FromResult(new ParsedSearchIntent { OriginalText = text ?? "" });
@@ -126,7 +126,14 @@ namespace RecipeApp.Services.Services
                     .Distinct()
                     .ToList();
 
-                _logger.LogInformation("Category: {C} | Tags: {T}", intent.Category ?? "none", string.Join(", ", intent.Tags));
+                if (knownIngredients != null && knownIngredients.Count > 0)
+                    intent.IngredientKeywords = ExtractIngredientMatches(tokens, lower, knownIngredients);
+
+                _logger.LogInformation("Category: {C} | Tags: {T} | Ingredients: {I}",
+                    intent.Category ?? "none",
+                    string.Join(", ", intent.Tags),
+                    string.Join(", ", intent.IngredientKeywords));
+
                 return Task.FromResult(intent);
             }
             catch (Exception ex)
@@ -134,6 +141,41 @@ namespace RecipeApp.Services.Services
                 _logger.LogError(ex, "AnalyzeAsync failed for: {Text}", text);
                 throw;
             }
+        }
+
+        private List<string> ExtractIngredientMatches(List<string> tokens, string lower, List<string> knownIngredients)
+        {
+            var matched = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var ingredient in knownIngredients)
+            {
+                var ingredientLower = ingredient.ToLowerInvariant();
+                 
+                if (lower.Contains(ingredientLower))
+                {
+                    matched.Add(ingredient);
+                    continue;
+                }
+
+                foreach (var token in tokens)
+                {
+                    if (token.Length < 4) continue;
+
+                    var result = Process.ExtractOne(
+                        token, [ingredientLower],
+                        scorer: ScorerCache.Get<FuzzySharp.SimilarityRatio.Scorer.Composite.WeightedRatioScorer>());
+
+                    int threshold = token.Length >= 6 ? 88 : 95;
+
+                    if (result != null && result.Score >= threshold)
+                    {
+                        matched.Add(ingredient);
+                        break;
+                    }
+                }
+            }
+
+            return matched.ToList();
         }
 
         private List<string> Tokenize(string text) =>

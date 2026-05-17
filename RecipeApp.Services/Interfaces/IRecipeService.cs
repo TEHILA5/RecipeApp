@@ -15,5 +15,6 @@ namespace RecipeApp.Services.Interfaces
         Task<RecipeDto> CreateRecipe(RecipeCreateDto createDto);
         Task<RecipeDto> UpdateRecipe(int id, RecipeCreateDto updateDto);
         Task<List<RecipeDto>> SearchByTags(List<string> tags);
+        Task<List<string>> GetAllIngredientNames();
     }
 }

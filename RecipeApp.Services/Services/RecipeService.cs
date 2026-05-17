@@ -1,9 +1,10 @@
-﻿using AutoMapper;
+﻿using System.Text.Json;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
 using RecipeApp.Services.Interfaces;
-using System.Text.Json;
 
 namespace RecipeApp.Services.Services
 {
@@ -325,6 +326,15 @@ namespace RecipeApp.Services.Services
             if (string.IsNullOrEmpty(tagsJson)) return new List<string>();
             try { return JsonSerializer.Deserialize<List<string>>(tagsJson) ?? new List<string>(); }
             catch { return new List<string>(); }
+        }
+
+        public async Task<List<string>> GetAllIngredientNames()
+        {
+            var ingredients = await _ingredientRepository.GetAll();
+            return ingredients
+                .Select(i => i.Name)
+                .Distinct()
+                .ToList();
         }
     }
 }

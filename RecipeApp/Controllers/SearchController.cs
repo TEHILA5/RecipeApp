@@ -40,7 +40,8 @@ namespace RecipeApp.Controllers
                 return BadRequest(new { message = "Text cannot be empty." });
             try
             {
-                var intent = await _textAnalysis.AnalyzeAsync(text);
+                var allIngredientNames = await _recipes.GetAllIngredientNames();
+                var intent = await _textAnalysis.AnalyzeAsync(text, allIngredientNames);
                 var all = await _recipes.GetAll();
 
                 List<RankedRecipeDto> ranked = all
@@ -98,16 +99,30 @@ namespace RecipeApp.Controllers
                 else
                     missed.Add($"Tags: 0/{tagCount} matched");
             }
-             
+
+            int ingredientCount = intent.IngredientKeywords.Count;
+            int matchedIngredients = ingredientCount > 0
+                ? CountMatchingIngredients(recipe, intent.IngredientKeywords)
+                : 0;
+
+            if (ingredientCount > 0)
+            {
+                if (matchedIngredients > 0)
+                    matched.Add($"Ingredients: {matchedIngredients}/{ingredientCount} matched");
+                else
+                    missed.Add($"Ingredients: 0/{ingredientCount} matched");
+            }
+
             bool hasAnyCriteria = intent.Category != null || intent.DifficultyLevel.HasValue
                                   || intent.MaxPrepTime.HasValue || tagCount > 0;
             if (!hasAnyCriteria) return new RankedRecipeDto { MatchScore = 0 };
 
             int score = 0;
             if (categoryMatch) score += 40;
-            if (diffMatch) score += 20;
-            if (timeMatch) score += 15;
-            if (tagCount > 0) score += (int)(25.0 * matchedTags / tagCount);
+            if (diffMatch) score += 15;
+            if (timeMatch) score += 10;
+            if (tagCount > 0) score += (int)(20.0 * matchedTags / tagCount);
+            if (ingredientCount > 0) score += (int)(15.0 * matchedIngredients / ingredientCount);
 
             if (!categoryMatch && matchedTags == 0) return new RankedRecipeDto { MatchScore = 0 };
              
@@ -132,6 +147,15 @@ namespace RecipeApp.Controllers
                 MatchedCriteria = matched,
                 MissedCriteria = missed
             };
+        }
+
+        private static int CountMatchingIngredients(RecipeDto recipe, List<string> keywords)
+        {
+            if (recipe.Ingredients == null || recipe.Ingredients.Count == 0) return 0;
+            return keywords.Count(k =>
+                recipe.Ingredients.Any(i =>
+                    i.IngredientName.Contains(k, StringComparison.OrdinalIgnoreCase) ||
+                    k.Contains(i.IngredientName, StringComparison.OrdinalIgnoreCase)));
         }
 
         private static string LevelLabel(int level) => level switch

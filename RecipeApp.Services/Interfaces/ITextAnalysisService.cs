@@ -4,6 +4,6 @@ namespace RecipeApp.Services.Interfaces
 {
     public interface ITextAnalysisService
     {
-        Task<ParsedSearchIntent> AnalyzeAsync(string text);
+        Task<ParsedSearchIntent> AnalyzeAsync(string text, List<string>? knownIngredients = null);
     }
 }
