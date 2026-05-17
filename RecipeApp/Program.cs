@@ -115,7 +115,7 @@ namespace RecipeApp
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseCors("AllowReactApp");
             app.UseAuthentication();
             app.UseAuthorization();
