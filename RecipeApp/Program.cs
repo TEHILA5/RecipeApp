@@ -3,6 +3,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RecipeApp.Common.DTOs;
@@ -87,7 +88,13 @@ namespace RecipeApp
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 
             builder.Services.AddDbContext<RecipeDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+            {
+                var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+                if (builder.Environment.IsProduction())
+                    options.UseNpgsql(connStr);
+                else
+                    options.UseSqlServer(connStr);
+            });
 
             builder.Services.AddScoped<IContext>(p => p.GetRequiredService<RecipeDbContext>());
 
@@ -101,15 +108,12 @@ namespace RecipeApp
             builder.Services.AddSignalR();
 
             var app = builder.Build();
-             
-            using (var scope = app.Services.CreateScope())
+
+            if (app.Environment.IsDevelopment())
             {
-                var db = scope.ServiceProvider.GetRequiredService<RecipeDbContext>();
-               db.Database.Migrate();
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
-             
-            app.UseSwagger();
-            app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
             app.UseCors("AllowReactApp");
