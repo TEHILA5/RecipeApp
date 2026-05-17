@@ -111,7 +111,10 @@ namespace RecipeApp
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<RecipeDbContext>();
-                db.Database.Migrate();
+                if (app.Environment.IsProduction())
+                    db.Database.EnsureCreated();
+                else
+                    db.Database.Migrate();
             }
              
             app.UseSwagger();
