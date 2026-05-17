@@ -87,7 +87,7 @@ namespace RecipeApp
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 
             builder.Services.AddDbContext<RecipeDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<IContext>(p => p.GetRequiredService<RecipeDbContext>());
 
