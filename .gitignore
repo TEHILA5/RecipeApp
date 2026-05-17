@@ -27,7 +27,7 @@ x86/
 !**/packages/build/
 
 # Entity Framework Migrations
-**/Migrations/
+#**/Migrations/
 
 # Others
 *.log
