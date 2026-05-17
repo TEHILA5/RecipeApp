@@ -111,7 +111,17 @@ namespace RecipeApp
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<RecipeDbContext>();
-                db.Database.Migrate();
+                if (app.Environment.IsProduction())
+                {
+                    var pending = db.Database.GetPendingMigrations().ToList();
+                    if (pending.Any())
+                    {
+                        db.Database.ExecuteSqlRaw("CREATE SCHEMA IF NOT EXISTS public");
+                        db.Database.EnsureCreated();
+                    }
+                }
+                else
+                    db.Database.Migrate();
             }
              
             app.UseSwagger();

@@ -48,7 +48,7 @@ namespace RecipeApp.DataContext.Migrations
 
                     b.HasIndex("IngredientId2");
 
-                    b.ToTable("Conversions");
+                    b.ToTable("Conversions", (string)null);
                 });
 
             modelBuilder.Entity("RecipeApp.Repository.Entities.Ingredient", b =>
@@ -69,7 +69,7 @@ namespace RecipeApp.DataContext.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Ingredients");
+                    b.ToTable("Ingredients", (string)null);
                 });
 
             modelBuilder.Entity("RecipeApp.Repository.Entities.Recipe", b =>
@@ -121,7 +121,7 @@ namespace RecipeApp.DataContext.Migrations
 
                     b.HasIndex("Category");
 
-                    b.ToTable("Recipes");
+                    b.ToTable("Recipes", (string)null);
                 });
 
             modelBuilder.Entity("RecipeApp.Repository.Entities.RecipeIngredient", b =>
@@ -147,7 +147,7 @@ namespace RecipeApp.DataContext.Migrations
 
                     b.HasIndex("IngredientId");
 
-                    b.ToTable("RecipeIngredients");
+                    b.ToTable("RecipeIngredients", (string)null);
                 });
 
             modelBuilder.Entity("RecipeApp.Repository.Entities.User", b =>
@@ -185,7 +185,7 @@ namespace RecipeApp.DataContext.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("RecipeApp.Repository.Entities.UserAction", b =>
@@ -232,7 +232,7 @@ namespace RecipeApp.DataContext.Migrations
                         .IsUnique()
                         .HasFilter("[ActionType] = 3");
 
-                    b.ToTable("UserActions");
+                    b.ToTable("UserActions", (string)null);
                 });
 
             modelBuilder.Entity("RecipeApp.Repository.Entities.Conversion", b =>
