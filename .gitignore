@@ -32,3 +32,6 @@ x86/
 # Others
 *.log
 *.cache
+
+appsettings.json
+appsettings.Production.json
