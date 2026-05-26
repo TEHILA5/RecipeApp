@@ -45,27 +45,6 @@ namespace RecipeApp.Services.Services
             return enriched.First();
         }
 
-        public async Task<UserActionDto> AddItem(UserActionDto item)
-        {
-            var action = _mapper.Map<UserAction>(item);
-            var created = await _userActionRepository.AddItem(action);
-
-            var enriched = await EnrichActions(new[] { created });
-            return enriched.First();
-        }
-
-        public async Task<UserActionDto> UpdateItem(int id, UserActionDto item)
-        {
-            var existing = await _userActionRepository.GetById(id)
-                ?? throw new KeyNotFoundException($"UserAction with id {id} not found.");
-
-            _mapper.Map(item, existing);
-            var updated = await _userActionRepository.UpdateItem(id, existing);
-
-            var enriched = await EnrichActions(new[] { updated });
-            return enriched.First();
-        }
-
         public async Task DeleteItem(int id)
         { 
             var existing = await _userActionRepository.GetById(id);

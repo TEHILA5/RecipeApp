@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
 
 namespace RecipeApp.Controllers
@@ -32,9 +33,4 @@ namespace RecipeApp.Controllers
         }
     }
 
-    public class NewsletterSubscribeDto
-    {
-        public string Email { get; set; } = "";
-        public string? Name { get; set; }
-    }
 }

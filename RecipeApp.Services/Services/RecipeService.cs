@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using AutoMapper;
-using Microsoft.EntityFrameworkCore;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
@@ -42,46 +41,6 @@ namespace RecipeApp.Services.Services
             return MapRecipeWithStats(recipe, allActions);
         }
 
-        public async Task<RecipeDto> AddItem(RecipeDto item)
-        {
-            var recipe = _mapper.Map<Recipe>(item);
-            var created = await _recipeRepository.AddItem(recipe);
-            var allActions = await _userActionRepository.GetAll();
-            return MapRecipeWithStats(created, allActions);
-        }
-
-        public async Task<RecipeDto> UpdateItem(int id, RecipeDto item)
-        {
-            var existing = await _recipeRepository.GetById(id)
-                ?? throw new KeyNotFoundException($"Recipe with id {id} not found.");
-
-            if (item.Name != null) existing.Name = item.Name;
-            if (item.Description != null) existing.Description = item.Description;
-            if (item.Category.HasValue) existing.Category = item.Category.Value;
-            if (item.Instructions != null) existing.Instructions = item.Instructions;
-            if (item.ArrImage?.Length > 0) existing.ImageUrl = item.ArrImage;
-            if (item.Servings.HasValue) existing.Servings = item.Servings.Value;
-            if (item.Level.HasValue) existing.Level = item.Level.Value;
-            if (item.PrepTime.HasValue) existing.PrepTime = item.PrepTime.Value;
-            if (item.TotalTime.HasValue) existing.TotalTime = item.TotalTime.Value;
-            if (item.Tags != null) existing.Tags = SerializeTags(item.Tags);
-
-            if (item.Ingredients != null)
-            {
-                existing.RecipeIngredients = item.Ingredients.Select(ri => new RecipeIngredient
-                {
-                    IngredientId = ri.IngredientId,
-                    Quantity = ri.Quantity,
-                    Unit = ri.Unit,
-                    Importance = ri.Importance ?? IngredientImportance.Essential
-                }).ToList();
-            }
-
-            var updated = await _recipeRepository.UpdateItem(id, existing);
-            var allActions = await _userActionRepository.GetAll();
-            return MapRecipeWithStats(updated, allActions);
-        }
-
         public async Task DeleteItem(int id)
         {
             _ = await _recipeRepository.GetById(id)
@@ -118,21 +77,23 @@ namespace RecipeApp.Services.Services
             return MapRecipeWithStats(loaded, allActions);
         }
 
-        public async Task<RecipeDto> UpdateRecipe(int id, RecipeCreateDto dto)
+        public async Task<RecipeDto> UpdateRecipe(int id, RecipeUpdateDto dto)
         {
+            var createDto = _mapper.Map<RecipeCreateDto>(dto);
+
             var recipe = new Recipe
             {
-                Name = dto.Name,
-                Description = dto.Description,
-                Category = dto.Category,
-                Instructions = dto.Instructions,
-                ImageUrl = dto.ArrImage,
-                Servings = dto.Servings,
-                Level = dto.Level,
-                PrepTime = dto.PrepTime,
-                TotalTime = dto.TotalTime,
-                Tags = SerializeTags(dto.Tags),
-                RecipeIngredients = dto.Ingredients?.Select(i => new RecipeIngredient
+                Name = createDto.Name,
+                Description = createDto.Description,
+                Category = createDto.Category,
+                Instructions = createDto.Instructions,
+                ImageUrl = createDto.ArrImage,
+                Servings = createDto.Servings,
+                Level = createDto.Level,
+                PrepTime = createDto.PrepTime,
+                TotalTime = createDto.TotalTime,
+                Tags = SerializeTags(createDto.Tags),
+                RecipeIngredients = createDto.Ingredients?.Select(i => new RecipeIngredient
                 {
                     IngredientId = i.IngredientId,
                     Quantity = i.Quantity,

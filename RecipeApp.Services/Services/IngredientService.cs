@@ -26,30 +26,8 @@ namespace RecipeApp.Services.Services
                 ?? throw new KeyNotFoundException($"Ingredient with id {id} not found.");
             return _mapper.Map<IngredientDto>(ingredient);
         }
-
-        public async Task<IngredientDto> AddItem(IngredientDto item)
-        {
-            if (await GetByName(item.Name) != null)
-                throw new InvalidOperationException($"Ingredient '{item.Name}' already exists.");
-
-            return _mapper.Map<IngredientDto>(await _repo.AddItem(_mapper.Map<Ingredient>(item)));
-        }
-
-        public async Task<IngredientDto> UpdateItem(int id, IngredientDto item)
-        {
-            var existing = await _repo.GetById(id)
-                ?? throw new KeyNotFoundException($"Ingredient with id {id} not found.");
-
-            if (!string.Equals(existing.Name, item.Name, StringComparison.OrdinalIgnoreCase))
-            {
-                if (await GetByName(item.Name) != null)
-                    throw new InvalidOperationException($"Ingredient '{item.Name}' already exists.");
-            }
-
-            _mapper.Map(item, existing);
-            return _mapper.Map<IngredientDto>(await _repo.UpdateItem(id, existing));
-        }
-
+        
+        
         public async Task DeleteItem(int id)
         {
             if (await _repo.GetById(id) == null)

@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RecipeApp.Common.DTOs;
 
 namespace RecipeApp.Services.Interfaces
 {
-    public interface IService<T>
+    public interface IChatService
     {
-        Task<List<T>> GetAll();
-        Task<T> GetById(int id);
-        Task DeleteItem(int id);
+        Task<string> GetReplyAsync(ChatRequestDto request);
     }
 }

@@ -88,7 +88,6 @@ namespace RecipeApp.DataContext
                 .HasForeignKey(ua => ua.RecipeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Filter תואם ל-SQL Server וגם ל-Postgres
             var isSqlServer = Database.IsSqlServer();
             var filter = isSqlServer
                 ? $"[{nameof(UserAction.ActionType)}] = {(int)UserActionType.Book}"

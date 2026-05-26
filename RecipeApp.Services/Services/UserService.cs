@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using RecipeApp.Common.DTOs;
-using RecipeApp.DataContext;
 using RecipeApp.Repository.Entities;
 using RecipeApp.Repository.Interfaces;
 using RecipeApp.Services.Interfaces;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
 namespace RecipeApp.Services.Services
 {
@@ -19,7 +17,7 @@ namespace RecipeApp.Services.Services
             _userRepository = userRepository;
             _mapper = mapper;
         }
-         
+
         public async Task<List<UserAdminDto>> GetAll()
         {
             var users = await _userRepository.GetAll();
@@ -33,24 +31,47 @@ namespace RecipeApp.Services.Services
             return _mapper.Map<UserAdminDto>(user);
         }
 
-        public async Task<UserAdminDto> UpdateItem(int id, UserAdminDto item)
+
+        public async Task<UserAdminDto> UpdateMe(int id, UserUpdateDto dto)
         {
             var existing = await _userRepository.GetById(id)
                 ?? throw new KeyNotFoundException($"User with id {id} not found.");
 
-            if (!string.IsNullOrWhiteSpace(item.Name))
-                existing.Name = item.Name;
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+                existing.Name = dto.Name;
 
-            if (!string.IsNullOrWhiteSpace(item.Phone))
-                existing.Phone = item.Phone;
-             
-            if (!string.IsNullOrEmpty(item.Email) &&
-                !string.Equals(item.Email, existing.Email, StringComparison.OrdinalIgnoreCase))
-            { 
-                if (await EmailExists(item.Email))
+            if (!string.IsNullOrWhiteSpace(dto.Phone))
+                existing.Phone = dto.Phone;
+
+            if (!string.IsNullOrEmpty(dto.Email) &&
+                !string.Equals(dto.Email, existing.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                if (await EmailExists(dto.Email))
                     throw new InvalidOperationException("Email already exists.");
+                existing.Email = dto.Email;
+            }
 
-                existing.Email = item.Email;
+            var updated = await _userRepository.UpdateItem(id, existing);
+            return _mapper.Map<UserAdminDto>(updated);
+        }
+
+        public async Task<UserAdminDto> UpdateUser(int id, UserAdminUpdateDto dto)
+        {
+            var existing = await _userRepository.GetById(id)
+                ?? throw new KeyNotFoundException($"User with id {id} not found.");
+
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+                existing.Name = dto.Name;
+
+            if (!string.IsNullOrWhiteSpace(dto.Phone))
+                existing.Phone = dto.Phone;
+
+            if (!string.IsNullOrEmpty(dto.Email) &&
+                !string.Equals(dto.Email, existing.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                if (await EmailExists(dto.Email))
+                    throw new InvalidOperationException("Email already exists.");
+                existing.Email = dto.Email;
             }
 
             var updated = await _userRepository.UpdateItem(id, existing);
@@ -59,14 +80,13 @@ namespace RecipeApp.Services.Services
 
         public async Task DeleteItem(int id)
         {
-            var existing = await _userRepository.GetById(id);
-            if (existing == null)
-                throw new KeyNotFoundException($"User with id {id} not found.");
+            _ = await _userRepository.GetById(id)
+                ?? throw new KeyNotFoundException($"User with id {id} not found.");
             await _userRepository.DeleteItem(id);
         }
-         
+
         public async Task<UserAdminDto> Register(UserCreateDto createDto)
-        { 
+        {
             if (await EmailExists(createDto.Email))
                 throw new InvalidOperationException("Email already exists.");
 
@@ -91,12 +111,25 @@ namespace RecipeApp.Services.Services
             return _mapper.Map<UserAdminDto>(user);
         }
 
-        public async Task<bool> EmailExists(string email)
+        public async Task ResetPassword(ResetPasswordDto resetDto)
+        {
+            var users = await _userRepository.GetAll();
+            var user = users.FirstOrDefault(u =>
+                string.Equals(u.Email, resetDto.Email, StringComparison.OrdinalIgnoreCase))
+                ?? throw new KeyNotFoundException("No account found with this email address.");
+
+            if (string.IsNullOrWhiteSpace(resetDto.NewPassword) || resetDto.NewPassword.Length < 6)
+                throw new ArgumentException("Password must be at least 6 characters.");
+
+            user.PasswordHash = HashPassword(resetDto.NewPassword);
+            await _userRepository.UpdateItem(user.Id, user);
+        }
+
+        private async Task<bool> EmailExists(string email)
         {
             var users = await _userRepository.GetAll();
             return users.Any(u => string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase));
         }
-         
 
         private static string HashPassword(string password)
         {
@@ -116,7 +149,6 @@ namespace RecipeApp.Services.Services
 
             byte[] salt = Convert.FromBase64String(parts[0]);
             string actualHash = Convert.ToBase64String(DeriveKey(password, salt));
-
             return actualHash == parts[1];
         }
 
@@ -128,20 +160,6 @@ namespace RecipeApp.Services.Services
                 prf: KeyDerivationPrf.HMACSHA256,
                 iterationCount: 100_000,
                 numBytesRequested: 32);
-        }
-
-        public async Task ResetPassword(ResetPasswordDto resetDto)
-        {
-            var users = await _userRepository.GetAll();
-            var user = users.FirstOrDefault(u =>
-                string.Equals(u.Email, resetDto.Email, StringComparison.OrdinalIgnoreCase))
-                ?? throw new KeyNotFoundException("No account found with this email address.");
-
-            if (string.IsNullOrWhiteSpace(resetDto.NewPassword) || resetDto.NewPassword.Length < 6)
-                throw new ArgumentException("Password must be at least 6 characters.");
-
-            user.PasswordHash = HashPassword(resetDto.NewPassword);
-            await _userRepository.UpdateItem(user.Id, user);
         }
     }
 }

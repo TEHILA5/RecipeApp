@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
-using RecipeApp.Repository.Entities;
 
 namespace RecipeApp.Controllers
 {
@@ -54,30 +53,7 @@ namespace RecipeApp.Controllers
         public async Task<ActionResult<RecipeDto>> Update(int id, [FromBody] RecipeUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
-            {
-                var createDto = new RecipeCreateDto
-                {
-                    Name = dto.Name ?? "",
-                    Description = dto.Description ?? "",
-                    Category = dto.Category ?? RecipeCategory.Sweats,
-                    Instructions = dto.Instructions ?? "",
-                    ArrImage = dto.ArrImage ?? "",
-                    Servings = dto.Servings ?? 4,
-                    Level = dto.Level ?? 1,
-                    PrepTime = dto.PrepTime ?? 15,
-                    TotalTime = dto.TotalTime ?? 60,
-                    Tags = dto.Tags,
-                    Ingredients = dto.Ingredients?.Select(i => new RecipeIngredientCreateDto
-                    {
-                        IngredientId = i.IngredientId,
-                        Quantity = i.Quantity,
-                        Unit = i.Unit ?? "g",
-                        Importance = i.Importance,
-                    }).ToList() ?? new List<RecipeIngredientCreateDto>()
-                };
-                return Ok(await _recipes.UpdateRecipe(id, createDto));
-            }
+            try { return Ok(await _recipes.UpdateRecipe(id, dto)); }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
             catch (Exception ex) { return StatusCode(500, new { message = ex.Message }); }
         }

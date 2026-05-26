@@ -7,15 +7,12 @@ using RecipeApp.Common.DTOs;
 
 namespace RecipeApp.Services.Interfaces
 {
-    public interface IUserService 
+    public interface IUserService:IService<UserAdminDto>
     { 
-        Task<List<UserAdminDto>> GetAll();
-        Task<UserAdminDto> GetById(int id);
-        Task<UserAdminDto> UpdateItem(int id, UserAdminDto item);
-        Task DeleteItem(int id);
         Task<UserAdminDto> Register(UserCreateDto createDto);
         Task<UserAdminDto> Login(UserLoginDto loginDto);
-        Task<bool> EmailExists(string email);
         Task ResetPassword(ResetPasswordDto resetDto);
+        Task<UserAdminDto> UpdateMe(int id, UserUpdateDto dto);
+        Task<UserAdminDto> UpdateUser(int id, UserAdminUpdateDto dto);
     }
 }

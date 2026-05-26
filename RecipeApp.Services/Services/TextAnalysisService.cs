@@ -1,4 +1,5 @@
-﻿using FuzzySharp;
+﻿using System.Text.RegularExpressions;
+using FuzzySharp;
 using FuzzySharp.SimilarityRatio;
 using Microsoft.Extensions.Logging;
 using RecipeApp.Common.DTOs;
@@ -91,7 +92,7 @@ namespace RecipeApp.Services.Services
             "sweet", "sour", "bitter", "fruity", "nutty", "spicy", "tangy",
             "gluten-free", "vegan", "dairy-free", "sugar-free", "healthy", "no-bake",
             "classic", "traditional", "fancy", "elegant", "rustic", "homemade",
-            "birthday", "holiday", "summer", "winter", "christmas", "breakfast",
+            "birthday", "holiday", "summer", "winter", "breakfast",
             "brunch", "snack", "quick", "kids", "comforting",
             "baked", "fried", "steamed", "frozen",
             "british", "french", "italian", "american", "australian",
@@ -220,15 +221,19 @@ namespace RecipeApp.Services.Services
         }
 
         private int? DetectPrepTime(string lower)
-        {
-            var patterns = new (string pattern, int minutes)[]
+        { 
+            var match = Regex.Match(lower,
+                @"(\d+)\s*(min|minute|minutes|hour|hours)");
+
+            if (match.Success)
             {
-                ("15 min", 15), ("30 min", 30), ("45 min", 45),
-                ("1 hour", 60), ("quick", 30), ("fast", 20)
-            };
-            foreach (var (pattern, minutes) in patterns)
-                if (lower.Contains(pattern))
-                    return minutes;
+                var value = int.Parse(match.Groups[1].Value);
+                var unit = match.Groups[2].Value;
+                return unit.StartsWith("hour") ? value * 60 : value;
+            }
+             
+            if (lower.Contains("quick") || lower.Contains("fast")) return 20;
+
             return null;
         }
 

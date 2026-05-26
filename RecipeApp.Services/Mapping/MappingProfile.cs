@@ -11,6 +11,7 @@ namespace RecipeApp.Services.Mapping
             CreateMap<User, UserAdminDto>().ReverseMap();
 
             CreateMap<User, UserDto>();
+            CreateMap<UserAdminDto, UserDto>();
 
             CreateMap<UserCreateDto, User>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -36,7 +37,7 @@ namespace RecipeApp.Services.Mapping
                 .ForMember(dest => dest.Ingredients, opt => opt.MapFrom(src => src.RecipeIngredients))
                 .ForMember(dest => dest.AverageRating, opt => opt.Ignore())
                 .ForMember(dest => dest.CommentCount, opt => opt.Ignore())
-                .ForMember(dest => dest.Tags, opt => opt.Ignore()); 
+                .ForMember(dest => dest.Tags, opt => opt.Ignore());
 
             CreateMap<RecipeDto, Recipe>()
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ArrImage))
@@ -48,6 +49,27 @@ namespace RecipeApp.Services.Mapping
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ArrImage))
                 .ForMember(dest => dest.RecipeIngredients, opt => opt.Ignore())
                 .ForMember(dest => dest.UserActions, opt => opt.Ignore());
+
+            CreateMap<RecipeUpdateDto, RecipeCreateDto>()
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name ?? ""))
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description ?? ""))
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category ?? RecipeCategory.Sweats))
+                .ForMember(dest => dest.Instructions, opt => opt.MapFrom(src => src.Instructions ?? ""))
+                .ForMember(dest => dest.ArrImage, opt => opt.MapFrom(src => src.ArrImage ?? ""))
+                .ForMember(dest => dest.Servings, opt => opt.MapFrom(src => src.Servings ?? 4))
+                .ForMember(dest => dest.Level, opt => opt.MapFrom(src => src.Level ?? 1))
+                .ForMember(dest => dest.PrepTime, opt => opt.MapFrom(src => src.PrepTime ?? 15))
+                .ForMember(dest => dest.TotalTime, opt => opt.MapFrom(src => src.TotalTime ?? 60))
+                .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags))
+                .ForMember(dest => dest.Ingredients, opt => opt.MapFrom(src =>
+                    src.Ingredients == null ? new List<RecipeIngredientCreateDto>() :
+                    src.Ingredients.Select(i => new RecipeIngredientCreateDto
+                    {
+                        IngredientId = i.IngredientId,
+                        Quantity = i.Quantity,
+                        Unit = i.Unit ?? "g",
+                        Importance = i.Importance
+                    }).ToList()));
 
             CreateMap<Ingredient, IngredientDto>().ReverseMap();
 

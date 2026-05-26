@@ -16,7 +16,10 @@ namespace RecipeApp.Services.Services
             services.AddScoped<IRecipeService, RecipeService>();
             services.AddScoped<IIngredientService, IngredientService>();
             services.AddScoped<IUserActionService, UserActionService>();
-            services.AddScoped<IConversionService, ConversionService>(); 
+            services.AddScoped<IConversionService, ConversionService>();
+            services.AddScoped<IChatService, ChatService>();
+            services.AddScoped<ISearchService, SearchService>();
+            services.AddScoped<IAuthService, AuthService>();
             return services;
         }
     }

@@ -34,34 +34,6 @@ namespace RecipeApp.Services.Services
             return (await Enrich(new[] { conversion })).First();
         }
 
-        public async Task<ConversionDto> AddItem(ConversionDto item)
-        {
-            var all = await _ingredients.GetAll();
-            var id1 = GetIdByName(all, item.Ingredient1Name);
-            var id2 = GetIdByName(all, item.Ingredient2Name);
-
-            if (await FindConversion(id1, id2) != null)
-                throw new InvalidOperationException(
-                    $"Conversion between '{item.Ingredient1Name}' and '{item.Ingredient2Name}' already exists.");
-
-            var created = await _repo.AddItem(_mapper.Map<Conversion>(item));
-            return (await Enrich(new[] { created })).First();
-        }
-
-        public async Task<ConversionDto> UpdateItem(int id, ConversionDto item)
-        {
-            var existing = await _repo.GetById(id)
-                ?? throw new KeyNotFoundException($"Conversion with id {id} not found.");
-
-            if (item.ConversionRatio.HasValue)
-                existing.ConversionRatio = item.ConversionRatio.Value;
-
-            if (item.IsBidirectional.HasValue)
-                existing.IsBidirectional = item.IsBidirectional.Value;
-
-            return (await Enrich(new[] { await _repo.UpdateItem(id, existing) })).First();
-        }
-
         public async Task DeleteItem(int id)
         {
             if (await _repo.GetById(id) == null)

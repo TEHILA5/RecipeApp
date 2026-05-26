@@ -1,11 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using RecipeApp.Common.DTOs;
 using RecipeApp.Services.Interfaces;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 namespace RecipeApp.Controllers
 {
@@ -14,12 +12,14 @@ namespace RecipeApp.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _users;
-        private readonly IConfiguration _config;
+        private readonly IAuthService _auth;
+        private readonly IMapper _mapper;
 
-        public UserController(IUserService userService, IConfiguration configuration)
+        public UserController(IUserService userService, IAuthService authService, IMapper mapper)
         {
             _users = userService;
-            _config = configuration;
+            _auth = authService;
+            _mapper = mapper;
         }
 
         [HttpPost("register")]
@@ -30,7 +30,7 @@ namespace RecipeApp.Controllers
             try
             {
                 var user = await _users.Register(dto);
-                return Ok(new { user = ToUserDto(user), token = GenerateToken(user) });
+                return Ok(new { user = _mapper.Map<UserDto>(user), token = _auth.GenerateToken(user) });
             }
             catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
             catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
@@ -44,7 +44,7 @@ namespace RecipeApp.Controllers
             try
             {
                 var user = await _users.Login(dto);
-                return Ok(new { user = ToUserDto(user), token = GenerateToken(user) });
+                return Ok(new { user = _mapper.Map<UserDto>(user), token = _auth.GenerateToken(user) });
             }
             catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
             catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
@@ -68,11 +68,7 @@ namespace RecipeApp.Controllers
         [Authorize]
         public async Task<ActionResult<UserDto>> GetMe()
         {
-            try
-            {
-                var user = await _users.GetById(GetCurrentUserId());
-                return Ok(ToUserDto(user));
-            }
+            try { return Ok(_mapper.Map<UserDto>(await _users.GetById(GetCurrentUserId()))); }
             catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
@@ -81,18 +77,7 @@ namespace RecipeApp.Controllers
         public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UserUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
-            {
-                var userId = GetCurrentUserId();
-                var updated = await _users.UpdateItem(userId, new UserAdminDto
-                {
-                    Id = userId,
-                    Name = dto.Name,
-                    Phone = dto.Phone,
-                    Email = dto.Email
-                });
-                return Ok(ToUserDto(updated));
-            }
+            try { return Ok(_mapper.Map<UserDto>(await _users.UpdateMe(GetCurrentUserId(), dto))); }
             catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
             catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
@@ -107,21 +92,17 @@ namespace RecipeApp.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<List<UserDto>>> GetAll()
+        public async Task<ActionResult<List<UserAdminDto>>> GetAll()
         {
-            try
-            {
-                var users = await _users.GetAll();
-                return Ok(users.Select(ToAdminDto).ToList());
-            }
+            try { return Ok(await _users.GetAll()); }
             catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<UserDto>> GetById(int id)
+        public async Task<ActionResult<UserAdminDto>> GetById(int id)
         {
-            try { return Ok(ToAdminDto(await _users.GetById(id))); }
+            try { return Ok(await _users.GetById(id)); }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
             catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
@@ -131,17 +112,7 @@ namespace RecipeApp.Controllers
         public async Task<ActionResult<UserAdminDto>> UpdateUser(int id, [FromBody] UserAdminUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
-            {
-                var updated = await _users.UpdateItem(id, new UserAdminDto
-                {
-                    Id = id,
-                    Name = dto.Name,
-                    Phone = dto.Phone,
-                    Email = dto.Email
-                });
-                return Ok(ToAdminDto(updated));
-            }
+            try { return Ok(await _users.UpdateUser(id, dto)); }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
             catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
             catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
@@ -156,58 +127,10 @@ namespace RecipeApp.Controllers
             catch (Exception ex) { return StatusCode(500, new { message = "Internal server error", error = ex.Message }); }
         }
 
-        private string GenerateToken(UserAdminDto user)
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var role = IsAdminEmail(user.Email) ? "Admin" : "User";
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, role)
-            };
-
-            var expirationMinutes = _config.GetValue<int>("Jwt:ExpirationMinutes");
-            var token = new JwtSecurityToken(
-                _config["Jwt:Issuer"],
-                _config["Jwt:Audience"],
-                claims,
-                expires: DateTime.Now.AddMinutes(expirationMinutes),
-                signingCredentials: creds);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
         private int GetCurrentUserId()
         {
             var claim = (HttpContext.User.Identity as ClaimsIdentity)?.FindFirst(ClaimTypes.NameIdentifier);
             return int.Parse(claim?.Value ?? "0");
         }
-
-        private bool IsAdminEmail(string email)
-        {
-            var adminEmail = _config["AdminEmail"] ?? "admin@recipeapp.com";
-            return string.Equals(email, adminEmail, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static UserDto ToUserDto(UserAdminDto u) => new()
-        {
-            Name = u.Name,
-            Phone = u.Phone,
-            Email = u.Email,
-            CreatedAt = u.CreatedAt
-        };
-
-        private static UserAdminDto ToAdminDto(UserAdminDto u) => new()
-        {
-            Id = u.Id,
-            Name = u.Name,
-            Phone = u.Phone,
-            Email = u.Email,
-            CreatedAt = u.CreatedAt
-        };
     }
 }

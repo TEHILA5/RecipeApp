@@ -13,7 +13,7 @@ namespace RecipeApp.Services.Interfaces
         Task<List<RecipeDto>> SearchByIngredients(List<string> ingredients);
         Task<List<RecipeDto>> GetRecommendedForUser(int userId);
         Task<RecipeDto> CreateRecipe(RecipeCreateDto createDto);
-        Task<RecipeDto> UpdateRecipe(int id, RecipeCreateDto updateDto);
+        Task<RecipeDto> UpdateRecipe(int id, RecipeUpdateDto dto);
         Task<List<RecipeDto>> SearchByTags(List<string> tags);
         Task<List<string>> GetAllIngredientNames();
     }
